@@ -1,0 +1,47 @@
+/* Readable type, predictable touch targets, and motion as progressive enhancement. */
+.button { font-size: .8125rem; min-height: 2.875rem; }
+.hero-copy > p { font-size: .875rem; }
+.hero-footnote { font-size: .6875rem; }
+.site-header nav { font-size: .8125rem; }
+.studio-link { font-size: .75rem; }
+.product-info h3, .price { font-size: .875rem; }
+.product-category { font-size: .625rem; }
+.search-field input, .sort-field select, .category-list button { font-size: .8125rem; }
+.filters h3 { font-size: .8125rem; }
+.stock-filter, .results-line { font-size: .6875rem; }
+.category-list button { min-height: 2.75rem; }
+.category-list button[aria-pressed=true] { box-shadow: inset 2px 0 #3e5b35; }
+.product-form label, .product-form input:not([type=checkbox]), .product-form textarea, .product-form select { font-size: .8125rem; }
+.product-form input:not([type=checkbox]), .product-form select { min-height: 2.75rem; }
+.product-form fieldset:disabled { opacity: .7; }
+.studio-product strong { font-size: .8125rem; }
+.studio-product small, .form-actions > span { font-size: .6875rem; }
+.detail-description { font-size: .9375rem; }
+.highlights li { font-size: .8125rem; }
+.detail-demo span { font-size: .75rem; }
+.approach p { font-size: .875rem; }
+.error-notice:focus { outline: 2px solid #914c36; outline-offset: 3px; }
+.footer-bottom { font-size: .6875rem; line-height: 1.6; }
+@media (hover: none) {
+  .product-image-link:hover > img { transform: none; }
+  .button:hover { transform: none; }
+}
+@media (max-width: 760px) {
+  .hero .button { font-size: .6875rem; }
+  .hero-copy > p { font-size: .75rem; }
+  .product-info h3, .price { font-size: .8125rem; }
+  .sort-field select { font-size: .6875rem; }
+  .search-field input { font-size: .75rem; }
+  .category-list button { font-size: .75rem; }
+  .product-form input:not([type=checkbox]), .product-form textarea, .product-form select { font-size: 1rem; }
+  .approach p { font-size: .8125rem; }
+}
+@media (max-width: 420px) {
+  .hero h1 { font-size: clamp(2.75rem, 14vw, 3.5rem); }
+  .hero-copy > p { font-size: .8125rem; }
+  .hero .button { font-size: .75rem; }
+  .studio-link { font-size: .625rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

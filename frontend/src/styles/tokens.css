@@ -1,0 +1,15 @@
+@theme {
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+:root {
+  font-family:var(--font-sans);
+  color:#243e2d;
+  background:#fffefb;
+  font-synthesis:none;
+  font-weight:400;
+  --green:#253e2e;
+  --cream:#f5f2e9;
+  --line:#e3e5db;
+  --muted:#73796d;
+}

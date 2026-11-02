@@ -1,0 +1,43 @@
+:root { --ease-grow: cubic-bezier(.22, 1, .36, 1); }
+.reveal { opacity: 1; transform: none; transition: opacity .5s var(--ease-grow), transform .5s var(--ease-grow); transition-delay: var(--reveal-delay, 0ms); }
+.reveal[data-reveal=pending] { opacity: 0; transform: translateY(22px); }
+.reveal:focus-within { opacity: 1; transform: none; transition: none; }
+.hero-copy > .eyebrow, .hero-copy > p, .hero-copy > .button, .hero-footnote { animation: soft-arrival .5s var(--ease-grow) both; }
+.hero-title-line > span { animation: line-arrival .7s var(--ease-grow) both; animation-delay: .06s; }
+.hero-title-line + .hero-title-line > span { animation-delay: .15s; }
+.hero-copy > p { animation-delay: .2s; }
+.hero-copy > .button { animation-delay: .27s; }
+.hero-footnote { animation-delay: .34s; }
+.hero-image > img { animation: photo-arrival 1s var(--ease-grow) backwards; transition: transform 1s var(--ease-grow); }
+.button > svg { transition: transform .22s ease; }
+.button:hover > svg, .button:focus-visible > svg { transform: translateX(4px); }
+.catalog-card-entry { animation: soft-arrival .4s var(--ease-grow) both; animation-delay: var(--reveal-delay, 0ms); }
+/* Reveal transitions own off-screen entries; avoid an entrance animation overriding their pending state. */
+.catalog-card-entry[data-reveal] { animation: none; }
+.rewild-dialog[open] { animation: dialog-arrival .32s var(--ease-grow) both; }
+.rewild-dialog[open]::backdrop { animation: backdrop-arrival .25s ease both; }
+.rewild-dialog[data-closing=true] { animation: dialog-departure .16s ease both; }
+.rewild-dialog[data-closing=true]::backdrop { animation: backdrop-departure .16s ease both; }
+.navigation-modal[open] { animation-name: navigation-arrival; }
+.navigation-modal[data-closing=true] { animation-name: navigation-departure; }
+@keyframes soft-arrival { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes line-arrival { from { opacity: 0; transform: translateY(105%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes photo-arrival { from { opacity: .65; transform: scale(1.045); } to { opacity: 1; transform: scale(1); } }
+@keyframes dialog-arrival { from { opacity: 0; transform: translateY(20px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes dialog-departure { to { opacity: 0; transform: translateY(12px) scale(.99); } }
+@keyframes backdrop-arrival { from { opacity: 0; } to { opacity: 1; } }
+@keyframes backdrop-departure { to { opacity: 0; } }
+@keyframes navigation-arrival { from { opacity: 0; transform: translateX(45px); } to { opacity: 1; transform: none; } }
+@keyframes navigation-departure { to { opacity: 0; transform: translateX(30px); } }
+@media (max-width: 760px) {
+  .rewild-dialog:not(.navigation-modal)[open] { animation-name: sheet-arrival; }
+  .rewild-dialog:not(.navigation-modal)[data-closing=true] { animation-name: sheet-departure; }
+  @keyframes sheet-arrival { from { opacity: .6; transform: translateY(45px); } to { opacity: 1; transform: none; } }
+  @keyframes sheet-departure { to { opacity: 0; transform: translateY(30px); } }
+}
+@media (hover: none) { .product-card:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal[data-reveal=pending] { opacity: 1; transform: none; }
+}

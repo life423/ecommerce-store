@@ -1,0 +1,89 @@
+import assert from 'node:assert/strict'
+import { once } from 'node:events'
+import { randomUUID } from 'node:crypto'
+import { test } from 'node:test'
+import mongoose from 'mongoose'
+import { createApp } from '../src/app.js'
+import { createProductModel, validateProduct } from '../src/catalog/product.js'
+import { sampleProducts } from '../src/catalog/samples.js'
+
+test('catalog integration with real MongoDB', { skip: !process.env.TEST_MONGO_URI }, async t => {
+  // Every run owns a fresh database; it never clears the application database.
+  const connection = await mongoose.createConnection(process.env.TEST_MONGO_URI, { dbName: `rewild_test_${randomUUID().replaceAll('-', '')}` }).asPromise()
+  t.after(async () => { await connection.dropDatabase(); await connection.close() })
+  const Product = createProductModel(connection)
+  await Product.init()
+  await Product.create(sampleProducts.map(validateProduct))
+  let database = 'connected'
+  const server = createApp({ productModel: Product, databaseStatus: () => database, editorEnabled: true }).listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  t.after(() => new Promise(resolve => server.close(resolve)))
+  const base = `http://127.0.0.1:${server.address().port}/api`
+  const headers = { 'Content-Type': 'application/json', 'X-Catalog-Editor': 'local' }
+  const send = async (path, method = 'GET', body, extra = {}) => {
+    const response = await fetch(`${base}${path}`, { method, headers: { ...headers, ...extra }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
+    return { status: response.status, data: await response.json() }
+  }
+  let created
+  const draft = { ...sampleProducts[0], name: 'Test Garden', sku: 'RW-TEST-NEW', slug: 'test-garden', status: 'draft' }
+
+  await t.test('lists, sorts, filters, paginates, and escapes search patterns', async () => {
+    const all = await send('/products?sort=price-asc&limit=2')
+    assert.equal(all.status, 200)
+    assert.equal(all.data.pagination.total, 6)
+    assert.equal(all.data.items.length, 2)
+    assert.ok(all.data.items[0].priceCents <= all.data.items[1].priceCents)
+    assert.equal(all.data.items[0].sku, undefined)
+    const kits = await send('/products?category=Growing%20kits&inStock=true')
+    assert.equal(kits.data.items.length, 1)
+    assert.equal((await send('/products?q=.*')).data.items.length, 0)
+    assert.equal((await send('/products?q=balcony')).data.pagination.total > 0, true)
+    assert.equal((await send('/products?page=2&limit=2')).data.items.length, 2)
+    for (const query of ['limit=10000', 'page=-1', 'q=a&q=b', 'sort=constructor', 'sort=__proto__', 'minPrice=5000&maxPrice=100', 'status=draft', 'q[$ne]=x']) {
+      assert.equal((await send(`/products?${query}`)).status, 400, query)
+    }
+  })
+  await t.test('requires explicit editor access and blocks cross-site requests', async () => {
+    assert.equal((await fetch(`${base}/admin/products`)).status, 403)
+    assert.equal((await send('/admin/products', 'POST', draft, { Origin: 'https://attacker.example' })).status, 403)
+    assert.equal((await send('/admin/products', 'POST', draft, { 'Sec-Fetch-Site': 'cross-site' })).status, 403)
+    assert.equal((await send('/admin/products', 'POST', draft, { 'Content-Type': 'text/plain' })).status, 415)
+  })
+  await t.test('creates a persistent draft and keeps it private', async () => {
+    const result = await send('/admin/products', 'POST', draft)
+    assert.equal(result.status, 201)
+    created = result.data.product
+    assert.equal(created.version, 0)
+    assert.equal((await send('/products/test-garden')).status, 404)
+    assert.equal((await send('/products')).data.pagination.total, 6)
+    assert.equal((await send(`/admin/products/${created.id}`)).data.product.sku, draft.sku)
+    assert.equal(await Product.countDocuments({ sku: draft.sku }), 1)
+  })
+  await t.test('validates writes and enforces unique SKU and slug indexes', async () => {
+    assert.equal((await send('/admin/products', 'POST', { ...draft, priceCents: 12.34 })).status, 422)
+    assert.equal((await send('/admin/products', 'POST', { ...draft, slug: 'different-slug' })).status, 409)
+    assert.equal((await send('/admin/products', 'POST', { ...draft, sku: 'DIFFERENT-SKU' })).status, 409)
+    assert.equal((await send('/admin/products', 'POST', { ...draft, __v: 99 })).status, 422)
+  })
+  await t.test('publishes a draft and prevents lost updates', async () => {
+    const result = await send(`/admin/products/${created.id}`, 'PUT', { ...draft, status: 'active', version: created.version })
+    assert.equal(result.status, 200)
+    assert.equal(result.data.product.version, 1)
+    assert.equal((await send('/products/test-garden')).status, 200)
+    assert.equal((await send(`/admin/products/${created.id}`, 'PUT', { ...draft, version: 0 })).status, 409)
+    assert.equal((await send(`/admin/products/${created.id}`, 'PUT', draft)).status, 422)
+    assert.equal((await send('/admin/products/bad-id', 'PUT', draft)).status, 404)
+  })
+  await t.test('archives without deleting the stored product', async () => {
+    assert.equal((await send(`/admin/products/${created.id}`, 'PUT', { ...draft, status: 'archived', version: 1 })).status, 200)
+    assert.equal((await send('/products/test-garden')).status, 404)
+    assert.equal((await Product.findById(created.id)).status, 'archived')
+    const info = await send('/catalog')
+    assert.equal(info.data.categories.reduce((sum, item) => sum + item.count, 0), 6)
+  })
+  await t.test('fails clearly instead of buffering queries when MongoDB is unavailable', async () => {
+    database = 'disconnected'
+    assert.equal((await send('/products')).status, 503)
+    assert.equal((await send('/ready')).status, 503)
+  })
+})

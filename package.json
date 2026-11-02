@@ -1,0 +1,26 @@
+{
+  "name": "ecommerce-store",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["frontend", "backend"],
+  "engines": { "node": ">=24.15.0 <25", "npm": ">=11 <12" },
+  "scripts": {
+    "dev": "concurrently --kill-others --names api,web --prefix-colors cyan,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w frontend",
+    "lint": "eslint backend && npm run lint -w frontend",
+    "test": "npm run test --workspaces",
+    "check": "npm run lint && npm test && npm run build",
+    "start": "npm run start -w backend",
+    "db:up": "docker compose up -d mongo",
+    "db:down": "docker compose stop mongo",
+    "seed": "npm run seed -w backend",
+    "stripe:listen": "node scripts/stripe-listen.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0"
+  }
+}

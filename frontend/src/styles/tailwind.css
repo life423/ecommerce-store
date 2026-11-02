@@ -1,5 +1,15 @@
-@tailwind base;
-
-@tailwind components;
-
-@tailwind utilities;
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./base.css";
+@import "./layout.css";
+@import "./catalog.css";
+@import "./product.css";
+@import "./studio.css";
+@import "./responsive.css";
+@import "./refinements.css";
+@import "./storefront.css";
+@import "./overlays.css";
+@import "./cart.css";
+@import "./interaction-craft.css";
+@import "./growing-guide.css";
+@import "./motion.css";

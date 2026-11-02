@@ -1,0 +1,67 @@
+/* Course techniques, adapted to REWILD: perspective, layers, clipping, and staging. */
+.catalog-card-entry { perspective: 1100px; }
+.product-card { position: relative; transform-style: preserve-3d; }
+.product-media::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(145deg, #fffaf118, transparent 50%, #2b422710); opacity: 0; transition: opacity .45s ease; }
+.product-badge { box-shadow: 3px 3px 0 #31462b12; transform: rotate(-2deg); transition: transform .35s var(--ease-grow), box-shadow .35s ease; }
+.quick-look-button { transform-origin: bottom right; }
+.product-flip-stage { position: relative; perspective: 1200px; height: clamp(300px, 25vw, 350px); }
+.product-flip-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.2, .75, .2, 1); }
+.product-media[data-flipped=true] .product-flip-inner { transform: rotateY(180deg); }
+.product-flip-front, .product-flip-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.product-flip-front { transform: rotateY(0deg); }
+.product-flip-front .product-image-link { width: 100%; height: 100%; aspect-ratio: auto; }
+.product-flip-front .product-image-link > img { object-fit: contain; }
+.card-flip-hint { position: absolute; top: 17px; right: 13px; display: flex; align-items: center; gap: 5px; font-size: 8px; padding: 5px; border-radius: 3px; background: #fffefbbf; color: #5f7252; }
+.product-badge ~ .card-flip-hint { top: 50px; }
+.product-flip-back { transform: rotateY(180deg); background: linear-gradient(135deg, #e5ecd8, #f5f5e9); padding: 24px 23px 70px; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
+.product-flip-back::before { content: ''; position: absolute; width: 160px; height: 160px; border: 1px solid #bacaa55c; border-radius: 50%; right: -85px; top: -80px; pointer-events: none; }
+.product-flip-back > .eyebrow { font-size: 8px; letter-spacing: 1.1px; }
+.flip-description { font: 20px/1.35 Georgia, serif; letter-spacing: -.35px; margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+.product-flip-back > ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; }
+.product-flip-back li { display: flex; gap: 7px; align-items: flex-start; font-size: 10px; line-height: 1.6; }
+.product-flip-back li svg { flex-shrink: 0; margin-top: 2px; }
+.product-flip-back .add-to-bag { margin-top: auto; font-size: 11px; min-height: 44px; gap: 8px; padding: 10px 12px; flex-shrink: 0; }
+.product-flip-back .add-to-bag > span { flex: 1; }
+.flip-card-actions { position: absolute; inset: auto 12px 12px; display: flex; gap: 8px; justify-content: space-between; z-index: 3; }
+.flip-card-actions .quick-look-button { position: static; min-height: 44px; padding: 10px 12px; }
+.flip-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 10px 12px; background: #fffefbe8; border: 1px solid #ffffffb0; border-radius: 3px; font-size: 10px; color: var(--green); box-shadow: 0 3px 12px #233d2b0d; }
+.flip-toggle:hover, .flip-toggle:focus-visible { background: #fffefb; }
+.product-media[data-flipped=true] .flip-card-actions { border-top: 1px solid #c7d4b8; padding-top: 10px; bottom: 10px; }
+@media (hover: hover) and (pointer: fine) {
+  .product-card:hover { transform: translateY(-7px) rotateX(1.5deg); box-shadow: 0 20px 35px -22px #233d2b65; }
+  .product-card:hover .product-image-link > img { transform: perspective(900px) scale(1.075) rotateY(-3deg) rotateX(2deg); }
+  .product-card:hover .product-media::after { opacity: 1; }
+  .product-card:hover .product-badge { transform: translateY(-2px) rotate(0); box-shadow: 4px 5px 0 #31462b20; }
+  .product-card:hover .quick-look-button { transform: translateY(-3px); }
+}
+.navigation-modal[open]:not([data-closing=true]) { animation-name: menu-circle-in; transform-origin: top right; }
+.mobile-navigation-content nav a { animation: menu-link-in .5s var(--ease-grow) both; animation-delay: .12s; }
+.mobile-navigation-content nav a:nth-child(2) { animation-delay: .18s; }
+.mobile-navigation-content nav a:nth-child(3) { animation-delay: .24s; }
+.mobile-navigation-content nav a > svg { transition: transform .25s ease; }
+.mobile-navigation-content nav a:hover > svg { transform: translateX(5px); }
+.checkout-button::before, .add-to-bag::before { content: ''; position: absolute; inset: 0; background: #b6c79b24; transform: translateX(-101%); transition: transform .45s var(--ease-grow); pointer-events: none; }
+.checkout-button:hover:not(:disabled)::before, .add-to-bag:hover:not(:disabled)::before, .checkout-button:focus-visible::before, .add-to-bag:focus-visible::before { transform: translateX(0); }
+@keyframes menu-circle-in { from { clip-path: circle(0 at calc(100% - 34px) 34px); } to { clip-path: circle(150% at calc(100% - 34px) 34px); } }
+@keyframes menu-link-in { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+@media (max-width: 1100px) {
+  .product-flip-back { padding-inline: 18px; gap: 12px; }
+  .flip-description { font-size: 18px; }
+  .product-flip-back > ul { display: none; }
+}
+@media (max-width: 760px) {
+  .product-flip-stage { height: 230px; }
+  .product-flip-back { padding: 18px 15px 66px; gap: 12px; }
+  .product-flip-back > .eyebrow { font-size: 7px; letter-spacing: .7px; line-height: 1.6; }
+  .flip-description { font: 14px/1.55 Georgia, serif; letter-spacing: -.2px; -webkit-line-clamp: 4; }
+  .product-flip-back .add-to-bag { font-size: 10px; padding-inline: 9px; }
+  .product-flip-back .add-to-bag > svg { width: 15px; }
+  .flip-card-actions { left: 8px; right: 8px; bottom: 8px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 6px; }
+  .flip-label { display: none; }
+  .flip-toggle { padding: 0; width: 40px; }
+  .flip-card-actions .quick-look-button { font-size: 10px; padding-inline: 6px; gap: 5px; }
+  .flip-card-actions .quick-look-button > svg { width: 15px; }
+  .card-flip-hint { right: 8px; top: 9px; padding: 3px; }
+  .card-flip-hint { font-size: 0; }
+  .card-flip-hint svg { width: 12px; height: 12px; }
+}
