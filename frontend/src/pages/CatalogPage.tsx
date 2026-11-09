@@ -4,7 +4,7 @@ import { useResource } from '../lib/useResource'
 import { shopSpaces } from '../lib/shopSpaces'
 import { ProductCard } from '../components/ProductCard'
 import { Icon } from '../components/Icon'
-import { CatalogImage } from '../components/CatalogImage'
+import { HeroProduct } from '../components/HeroProduct'
 import { QuickView } from '../components/QuickView'
 import { Reveal } from '../components/Reveal'
 import { FilterSheet } from '../components/FilterSheet'
@@ -59,22 +59,22 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
   return <>
     <section className="hero">
       <div className="hero-copy">
-        <span className="eyebrow"><span className="tiny-star">✳</span> A little space. A lot of possibility.</span>
+        <span className="eyebrow"><span className="tiny-star" aria-hidden="true">✳</span> Small-space gardening</span>
         <h1><span className="hero-title-line"><span>Good things</span></span><span className="hero-title-line"><span>start <em>small.</em></span></span></h1>
-        <p>A windowsill. A balcony. A little corner of your world.<br className="desktop-break" /> Growing kits, seeds, and tools to bring it to life.</p>
-        <a className="button button-dark" href="#collection">Shop products <Icon name="arrow" /></a>
-        <button type="button" className="hero-guide-link" aria-haspopup="dialog" onClick={onOpenGuide}>New to growing? Find your starting point <Icon name="arrow" size={16} /></button>
-        <div className="hero-footnote"><span className="hand-drawn-leaf"><Icon name="leaf" size={24} /></span> For the growers. And the not-yet-growers.</div>
+        <p>Growing kits, seeds, and tools for windowsills, balconies, and little corners.</p>
+        <div className="hero-actions">
+          <a className="button button-secondary" href="#collection">Shop all products <Icon name="arrow" /></a>
+          <button type="button" className="hero-guide-link" aria-haspopup="dialog" onClick={onOpenGuide}>Growing guide</button>
+        </div>
       </div>
-      <div className="hero-image"><CatalogImage src="/images/hero.jpg" sizes="(max-width: 420px) 100vw, 50vw" alt="A sunlit city balcony filled with herbs and terracotta planters" width="1536" height="1024" fetchPriority="high" /><div className="hero-image-note"><span>Less scrolling.<br /><em>More growing.</em></span><span>01 / THE SMALL-SPACE EDIT</span></div></div>
+      <HeroProduct />
     </section>
-    <div className="values-strip"><span><Icon name="leaf" size={17} /> Small-space friendly</span><span>Good tools. Simple beginnings.</span><span>Grow a little, every day.</span><span className="values-end">Rooted in possibility <span>↗</span></span></div>
 
-    <section id="collection" className="collection page-width" ref={collection}>
+    <section id="collection" className="collection page-width" aria-labelledby="collection-title" ref={collection}>
       <Reveal>
         <div className="section-heading collection-heading">
           <span className="eyebrow">THE GROWING COLLECTION</span>
-          <h2>A little green goes a long way.</h2>
+          <h2 id="collection-title">Shop the collection.</h2>
           <a className="text-link collection-space-link" href="#shop-by-space">Shop by space <Icon name="arrow" size={16} /></a>
         </div>
       </Reveal>

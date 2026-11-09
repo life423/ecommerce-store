@@ -2,13 +2,12 @@
 .reveal { opacity: 1; transform: none; transition: opacity .5s var(--ease-grow), transform .5s var(--ease-grow); transition-delay: var(--reveal-delay, 0ms); }
 .reveal[data-reveal=pending] { opacity: 0; transform: translateY(22px); }
 .reveal:focus-within { opacity: 1; transform: none; transition: none; }
-.hero-copy > .eyebrow, .hero-copy > p, .hero-copy > .button, .hero-footnote { animation: soft-arrival .5s var(--ease-grow) both; }
+.hero-copy > .eyebrow, .hero-copy > p, .hero-actions { animation: soft-arrival .5s var(--ease-grow) both; }
 .hero-title-line > span { animation: line-arrival .7s var(--ease-grow) both; animation-delay: .06s; }
 .hero-title-line + .hero-title-line > span { animation-delay: .15s; }
 .hero-copy > p { animation-delay: .2s; }
-.hero-copy > .button { animation-delay: .27s; }
-.hero-footnote { animation-delay: .34s; }
-.hero-image > img { animation: photo-arrival 1s var(--ease-grow) backwards; transition: transform 1s var(--ease-grow); }
+.hero-actions { animation-delay: .27s; }
+.hero-image > img, .hero-feature-photo > img { animation: photo-arrival 1s var(--ease-grow) backwards; transition: transform 1s var(--ease-grow); }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .button-dark > svg:last-child { transition: transform .22s ease; }
   .button-dark:hover:not(:disabled) > svg:last-child { transform: translateX(3px); }

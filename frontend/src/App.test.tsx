@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { centsFromInput, money } from './lib/catalog'
@@ -32,12 +32,17 @@ describe('storefront catalog', () => {
   it('renders actual API products and sends category and stock filters to the server', async () => {
     const fetchMock = mockApi()
     render(<App />)
-    expect(await screen.findByRole('heading', { name: product.name })).toBeInTheDocument()
-    expect(screen.getByText('$68')).toBeInTheDocument()
+    const collection = within(screen.getByRole('region', { name: 'Shop the collection.' }))
+    expect(await collection.findByRole('heading', { name: product.name })).toBeInTheDocument()
+    expect(collection.getByText('$68')).toBeInTheDocument()
+    const featured = within(await screen.findByRole('article', { name: 'Featured product' }))
+    expect(featured.getByRole('link', { name: product.name })).toHaveAttribute('href', '/products/the-balcony-grow-box')
+    expect(featured.getByText('$68')).toBeInTheDocument()
+    expect(featured.getByRole('button', { name: 'Add to bag' })).toBeEnabled()
     fireEvent.click(screen.getByRole('button', { name: 'Filter by Planters' }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('category=Planters'))).toBe(true))
     fireEvent.click(screen.getByRole('checkbox', { name: 'In stock only' }))
-    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('inStock=true'))).toBe(true))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('category=Planters') && url.includes('inStock=true'))).toBe(true))
   })
   it('offers recovery when the catalog fails and displays an empty result honestly', async () => {
     let fails = true

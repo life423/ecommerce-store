@@ -37,15 +37,8 @@
   .hero-copy>p {
     font-size:11px
   }
-  .hero-image {
-    min-height:435px
-  }
   .hero .eyebrow {
     font-size:8px
-  }
-  .values-strip {
-    padding-inline:32px;
-    font-size:9px
   }
   .catalog-layout {
     grid-template-columns:155px minmax(0,1fr);
@@ -138,38 +131,6 @@
   .hero-copy>p {
     font-size:10px;
     line-height:1.8
-  }
-  .hero-footnote {
-    font-size:8px;
-    gap:7px;
-    line-height:1.6;
-    margin-top:23px
-  }
-  .hero-image {
-    min-height:360px
-  }
-  .hero-image-note {
-    left:17px;
-    bottom:24px;
-    right:17px
-  }
-  .hero-image-note>span:first-child {
-    font-size:22px
-  }
-  .hero-image-note>span:last-child {
-    display:none
-  }
-  .desktop-break {
-    display:none
-  }
-  .values-strip {
-    padding-inline:20px;
-    gap:13px;
-    min-height:48px;
-    font-size:8px
-  }
-  .values-strip>span:nth-child(2),.values-strip>span:last-child {
-    display:none
   }
   .collection {
     padding-top:40px;
@@ -333,17 +294,6 @@
   }
   .hero .eyebrow {
     font-size:8px
-  }
-  .hero-footnote {
-    font-size:9px;
-    margin-top:23px
-  }
-  .hero-image {
-    min-height:310px
-  }
-  .hero-image-note>span:last-child {
-    display:block;
-    font-size:7px
   }
   .section-heading h2 {
     font-size:29px
