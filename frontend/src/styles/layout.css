@@ -23,7 +23,6 @@
 }
 
 .site-header {
-  height:94px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -52,14 +51,6 @@
   display:flex;
   gap:31px;
   font-size:12px
-}
-
-.site-header nav a {
-  padding:7px 0
-}
-
-.site-header nav a:hover,.nav-active {
-  border-bottom:1px solid
 }
 
 .header-actions {

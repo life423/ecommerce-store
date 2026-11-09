@@ -36,7 +36,7 @@ function Storefront() {
   return <>
     <a className="skip-link" href="#main-content">Skip to content</a>
     <div className="announcement"><span>A LITTLE GREENER. A LITTLE CLOSER TO HOME.</span><span>Meet your new growing habit <span aria-hidden="true">↗</span></span></div>
-    <SiteHeader editorEnabled={catalog.data?.editorEnabled ?? false} isStudio={isStudio} onOpenGuide={openGuide} />
+    <SiteHeader editorEnabled={catalog.data?.editorEnabled ?? false} isStudio={isStudio} overHero={path === ''} onOpenGuide={openGuide} />
     <div id="main-content" tabIndex={-1}>
       {path === '' ? <main><CatalogPage catalog={catalog.data} onOpenGuide={openGuide} /></main>
         : productMatch ? <ProductPage slug={productMatch[1]} />

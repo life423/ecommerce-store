@@ -25,6 +25,7 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
   const [quickView, setQuickView] = useState<Product | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const collection = useRef<HTMLElement>(null)
+  const resultsSummary = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     const timer = setTimeout(() => setSearch(query), 300)
     return () => clearTimeout(timer)
@@ -75,10 +76,14 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
         </aside>
         <div className="catalog-results">
           <div className="catalog-toolbar"><label className="search-field"><Icon name="search" size={18} /><input id="catalog-search" type="search" aria-label="Search products" placeholder="Find your next good thing…" maxLength={100} value={query} onChange={event => { setQuery(event.target.value); setPage(1) }} /></label><label className="sort-field"><span className="sr-only">Sort products</span><select value={sort} onChange={event => { setSort(event.target.value); setPage(1) }}><option value="featured">Our favorites</option><option value="newest">Newest arrivals</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="name">Name: A–Z</option></select></label><button type="button" className="mobile-filter-trigger" aria-haspopup="dialog" onClick={() => setFiltersOpen(true)}><Icon name="sliders" size={18} /><span>Filters</span>{filterCount > 0 && <span className="filter-count">{filterCount}</span>}</button></div>
-          <div className="results-line" role="status" aria-live="polite"><span>{products.error ? 'Collection unavailable' : products.loading ? 'Gathering good things…' : `${total} good ${total === 1 ? 'thing' : 'things'}${category ? ` · ${category}` : ''}`}</span>{(hasActiveFilters || sort !== 'featured') && <button onClick={reset}>Clear filters <Icon name="close" size={12} /></button>}</div>
+          <div className="results-line" role="status" aria-live="polite"><span ref={resultsSummary} tabIndex={-1}>{products.error ? 'Collection unavailable' : products.loading ? 'Gathering good things…' : `${total} good ${total === 1 ? 'thing' : 'things'}${category ? ` · ${category}` : ''}`}</span>{(hasActiveFilters || sort !== 'featured') && <button onClick={reset}>Clear filters <Icon name="close" size={12} /></button>}</div>
           {hasActiveFilters && <div className="active-filters" aria-label="Active filters">
-            {space && <button aria-label={`Remove ${space.name.toLowerCase()} filter`} onClick={() => { setSpaceId(null); setPage(1) }}>
-              {space.name}<Icon name="close" size={12} />
+            {space && <button type="button" className="space-filter-chip" aria-label={`Remove ${space.name.toLowerCase()} filter`} onClick={() => {
+              setSpaceId(null)
+              setPage(1)
+              resultsSummary.current?.focus({ preventScroll: true })
+            }}>
+              <Icon name="check" size={15} /><span>{space.name}</span><Icon name="close" size={16} />
             </button>}
             {category && <button aria-label={`Remove ${category} filter`} onClick={() => chooseCategory('')}>{category}<Icon name="close" size={12} /></button>}
             {inStock && <button aria-label="Remove in-stock filter" onClick={() => { setInStock(false); setPage(1) }}>In stock<Icon name="close" size={12} /></button>}

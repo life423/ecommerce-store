@@ -51,11 +51,8 @@
 .cart-shipping-row { color: #6c7a5f; font-size: 11px; margin-top: 9px; }
 .cart-status { margin: 15px 0; font-size: 11px; line-height: 1.6; color: #6f7e61; min-height: 18px; }
 .checkout-button, .add-to-bag { width: 100%; min-height: 50px; gap: 12px; position: relative; overflow: hidden; }
-.checkout-button { font-size: 13px; }
 .checkout-button > span { flex: 1; }
 .checkout-button > .loading-dot { flex: 0 0 7px; background: #c7d5ad; }
-.button:disabled { opacity: .55; cursor: not-allowed; }
-.button:disabled:hover > svg { transform: none; }
 .checkout-trust { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding-top: 13px; font-size: 10px; color: #79836e; }
 .checkout-trust strong { font-size: 17px; letter-spacing: -.7px; color: var(--green); margin-left: 3px; }
 .test-mode-pill { display: inline-flex; align-items: center; border: 1px solid #d8dfcb; border-radius: 3px; background: #f2f4e9; padding: 5px 7px; color: #586c47; font-size: 8px; font-weight: 600; letter-spacing: .8px; white-space: nowrap; }
@@ -76,8 +73,7 @@
 .cart-empty h3 { font: 41px/1.1 Georgia, serif; letter-spacing: -1px; margin: 20px 0; }
 .cart-empty > p { font-size: 13px; line-height: 1.9; color: #758068; max-width: 270px; margin: 0 auto 27px; }
 .cart-empty > .button { margin-inline: auto; }
-.quick-view-product-link { display: flex; justify-content: center; align-items: center; gap: 12px; min-height: 44px; font-size: 11px; margin-top: 7px; text-decoration: underline; text-underline-offset: 4px; }
-.product-purchase { margin-top: 28px; }
+.product-purchase { margin-top: 1.15rem; }
 .product-purchase > p { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 10px; color: #718061; margin-top: 12px; line-height: 1.6; }
 .product-keep-exploring { display: flex; gap: 12px; min-height: 44px; align-items: center; margin-top: 14px; }
 
@@ -155,7 +151,6 @@
   .checkout-trust { padding-top: 9px; }
 }
 @media (max-width: 360px) {
-  .header-search { display: none !important; }
   .cart-heading, .cart-scroll, .cart-footer { padding-inline: 18px; }
   .cart-line { grid-template-columns: 74px minmax(0, 1fr); gap: 12px; }
   .quantity-control button { width: 36px; }

@@ -114,4 +114,24 @@ describe('storefront interactions', () => {
     expect(trigger).toHaveFocus()
     trigger.remove()
   })
+
+  it('shows fetched photos and all facts in quick look, and resets close-up when a new photo is picked', async () => {
+    const image = { url: '/images/planter-detail.jpg', alt: 'Close view of the drip tray' }
+    const highlights = ['Terracotta planter', 'Matching drip tray', 'Fits a small balcony', 'Plants sold separately']
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ product: { ...product, images: [...product.images, image], highlights } }),
+    }))
+    render(<QuickView product={product} onDismiss={() => {}} />)
+
+    const secondPhoto = await screen.findByRole('button', { name: `View photo 2: ${image.alt}` })
+    const closeUp = screen.getByRole('button', { name: 'Close-up' })
+    fireEvent.click(closeUp)
+    expect(closeUp).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(secondPhoto)
+    expect(secondPhoto).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('img', { name: image.alt })).toHaveAttribute('src', image.url)
+    expect(closeUp).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('region', { name: 'At a glance' })).toHaveTextContent('Plants sold separately')
+  })
 })

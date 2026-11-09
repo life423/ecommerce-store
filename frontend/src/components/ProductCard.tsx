@@ -28,8 +28,8 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
           <AddToCart product={product} />
         </div>
       </div></div>
-      <div className="flip-card-actions"><button ref={toggle} type="button" className="flip-toggle" aria-label={`Show ${flipped ? 'photo' : 'details'} for ${product.name}`} aria-pressed={flipped} aria-controls={detailsId} onClick={() => { setPinned(!flipped); setHovered(false) }}><Icon name="flip" size={16} /><span className="flip-label">{flipped ? 'Photo' : 'Details'}</span></button>
-        <button type="button" className="quick-look-button" aria-label={`Quick look at ${product.name}`} aria-haspopup="dialog" onClick={() => onQuickView(product)}><Icon name="eye" size={17} /><span>Quick look</span></button></div>
+      <div className="flip-card-actions"><button ref={toggle} type="button" className="button button-secondary flip-toggle" aria-label={`Show ${flipped ? 'photo' : 'details'} for ${product.name}`} aria-pressed={flipped} aria-controls={detailsId} onClick={() => { setPinned(!flipped); setHovered(false) }}><Icon name="flip" size={16} /><span className="flip-label">{flipped ? 'Photo' : 'Details'}</span></button>
+        <button type="button" className="button button-secondary quick-look-button" aria-label={`Quick look at ${product.name}`} aria-haspopup="dialog" onClick={() => onQuickView(product)}><Icon name="eye" size={17} /><span>Quick look</span></button></div>
     </div>
     <div className="product-card-copy"><div className="product-category">{product.category}</div>
     <div className="product-info"><h3><a href={`/products/${product.slug}`}>{product.name}</a></h3><span className="price">{money(product.priceCents)}</span></div>

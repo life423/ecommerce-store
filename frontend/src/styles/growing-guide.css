@@ -1,7 +1,7 @@
 .guide-nav-button { font-size: 12px; padding-block: 12px; text-underline-offset: 6px; }
 .guide-nav-button:hover { text-decoration: underline; }
-.hero-guide-link { display: inline-flex; align-items: center; gap: 12px; align-self: flex-start; min-height: 44px; margin-top: 8px; padding: 7px 0; font-size: 11px; color: #65775a; text-decoration: underline; text-underline-offset: 4px; }
-.hero-guide-link > svg { transition: transform .25s ease; }
+.hero-guide-link { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; min-height: 44px; margin-top: 8px; padding: 7px 0; font-size: .8125rem; line-height: 1.5; text-align: left; color: #52634b; text-decoration: underline; text-underline-offset: 4px; }
+.hero-guide-link > svg { flex-shrink: 0; transition: transform .25s ease; }
 .hero-guide-link:hover > svg { transform: translateX(5px); }
 .hero-guide-link + .hero-footnote { margin-top: 13px; }
 .mobile-guide-link { display: flex; gap: 12px; align-items: center; min-height: 58px; padding-block: 17px; border-bottom: 1px solid var(--line); font-size: 13px; }
@@ -53,5 +53,4 @@
   .guide-columns p { font-size: 13px; margin-bottom: 0; }
   .guide-cta { width: 100%; margin-top: 25px; }
   .guide-note { margin-bottom: 0; }
-  .hero-guide-link { font-size: 10px; gap: 10px; text-align: left; }
 }

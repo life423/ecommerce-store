@@ -21,7 +21,7 @@ function CartContent({ titleId }: { titleId: string }) {
   const { completePurchase } = cart
   const [refresh, setRefresh] = useState(0)
   const { quote, loading, error } = useCartQuote(cart.items, refresh)
-  const [checkingOut, setCheckingOut] = useState(false)
+  const [cartAction, setCartAction] = useState<'opening' | 'releasing' | null>(null)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [pending, setPending] = useState<CheckoutAttempt | null>(readCheckout)
   const [pendingOrder, setPendingOrder] = useState<CheckoutOrder | null>(null)
@@ -30,6 +30,7 @@ function CartContent({ titleId }: { titleId: string }) {
   const busy = useRef(false)
   const visibleItems = pendingOrder?.items ?? cart.items
   const count = visibleItems.reduce((total, item) => total + item.quantity, 0)
+  const actionLabel = cartAction === 'opening' ? 'Opening Stripe…' : cartAction === 'releasing' ? 'Releasing reserved items…' : null
 
   useEffect(() => {
     if (!pending?.orderId || !pending.token) return
@@ -52,19 +53,23 @@ function CartContent({ titleId }: { titleId: string }) {
 
   async function releaseCheckout() {
     if (!pending?.orderId || !pending.token || busy.current) return
-    busy.current = true; setCheckingOut(true); setCheckoutError(null)
+    busy.current = true
+    setCartAction('releasing')
+    setCheckoutError(null)
     try {
       const { order } = await api<{ order: CheckoutOrder }>(`/checkout/${pending.orderId}/cancel`, { method: 'POST', headers: { Authorization: `Bearer ${pending.token}`, 'Content-Type': 'application/json' }, body: '{}' })
       if (order.state === 'paid') completePurchase(order.id, order.items)
       if (!['paid', 'expired', 'failed'].includes(order.state)) throw new Error('Checkout is still open')
       clearCheckout(); attempt.current = null; setPending(null); setPendingOrder(null); setRefresh(value => value + 1)
     } catch { setCheckoutError('We could not release this checkout yet. Please try again.') }
-    finally { busy.current = false; setCheckingOut(false) }
+    finally { busy.current = false; setCartAction(null) }
   }
 
   async function checkout() {
     if (busy.current || pendingLoading || !quote?.checkoutEnabled || (!pending && (loading || !quote.canCheckout))) return
-    busy.current = true; setCheckingOut(true); setCheckoutError(null)
+    busy.current = true
+    setCartAction('opening')
+    setCheckoutError(null)
     if (pendingOrder?.state === 'open' && pendingOrder.checkoutUrl) { navigate(pendingOrder.checkoutUrl); return }
     if (!attempt.current) attempt.current = { id: crypto.randomUUID(), items: cart.items, fingerprint: quote.fingerprint }
     saveCheckout(attempt.current)
@@ -78,7 +83,7 @@ function CartContent({ titleId }: { titleId: string }) {
       setCheckoutError(error instanceof ApiError ? error.message : 'Checkout could not open. Please try again.')
       if (error instanceof ApiError && [409, 422].includes(error.status) && error.code !== 'CHECKOUT_BUSY') { attempt.current = null; clearCheckout(); setPending(null) }
       setRefresh(value => value + 1)
-      busy.current = false; setCheckingOut(false)
+      busy.current = false; setCartAction(null)
     }
   }
 
@@ -87,7 +92,7 @@ function CartContent({ titleId }: { titleId: string }) {
     {cart.items.length === 0 && !pending ? <div className="cart-empty"><div className="cart-empty-art"><Icon name="leaf" size={55} /><span /><span /></div><span className="eyebrow">A LITTLE ROOM FOR POSSIBILITY</span><h3>Good things<br />start with one.</h3><p>A growing kit. A few seeds. Your next little ritual is waiting.</p><button className="button button-dark" onClick={() => dismiss()}>Keep exploring <Icon name="arrow" size={18} /></button></div>
       : <>
         <div className="cart-scroll"><div className="cart-test-note"><Icon name="spark" size={20} /><p>A little practice. Zero real charges.<span>This bag uses Stripe test checkout.</span></p></div>
-          {pending && <div className="cart-pending" role="status"><strong>{pendingLoading ? 'Checking your existing checkout…' : pendingOrder ? 'Your test checkout is waiting.' : 'Let’s finish opening your checkout.'}</strong><p>{pendingOrder ? `${pendingOrder.items.reduce((n, line) => n + line.quantity, 0)} reserved good things · ${money(pendingOrder.totalCents)}. Continue at the original prices or release them to edit your bag.` : 'Retrying safely reuses the same checkout. Your saved bag is kept.'}</p>{pending.orderId && <button disabled={checkingOut || pendingLoading} onClick={() => void releaseCheckout()}>Release & edit bag <Icon name="back" size={14} /></button>}</div>}
+          {pending && <div className="cart-pending" role="status"><strong>{pendingLoading ? 'Checking your existing checkout…' : pendingOrder ? 'Your test checkout is waiting.' : 'Let’s finish opening your checkout.'}</strong><p>{pendingOrder ? `${pendingOrder.items.reduce((n, line) => n + line.quantity, 0)} reserved good things · ${money(pendingOrder.totalCents)}. Continue at the original prices or release them to edit your bag.` : 'Retrying safely reuses the same checkout. Your saved bag is kept.'}</p>{pending.orderId && <button disabled={cartAction !== null || pendingLoading} onClick={() => void releaseCheckout()}>Release & edit bag <Icon name="back" size={14} /></button>}</div>}
           {error && <div className="cart-error" role="alert"><p>{error}</p><button className="text-link" onClick={() => setRefresh(value => value + 1)}>Refresh bag <Icon name="arrow" size={16} /></button></div>}
           <ul className="cart-lines" aria-label="Bag items" aria-busy={loading} inert={pending ? true : undefined}>{visibleItems.map((item, index) => {
             const line = quote?.items.find(line => line.productId === item.productId)
@@ -105,9 +110,19 @@ function CartContent({ titleId }: { titleId: string }) {
           {!cart.storageAvailable && <p className="cart-line-issue">Your browser could not save this bag. Keep this tab open while you shop.</p>}
         </div>
         <div className="cart-footer"><div className="cart-subtotal"><span>{pendingOrder ? 'Reserved subtotal' : 'Bag subtotal'} <small>USD</small></span><strong key={loading ? 'refreshing' : quote?.totalCents}>{pendingOrder ? money(pendingOrder.totalCents) : loading ? 'Updating…' : quote ? money(quote.totalCents) : '—'}</strong></div><div className="cart-shipping-row"><span>Demo shipping</span><span>On us</span></div>
-          <div role="status" className="cart-status">{pending ? 'Continue safely, or release your reserved items to edit.' : loading ? 'Checking the latest prices & availability…' : !quote?.canCheckout && !error ? 'A little update is needed above before checkout.' : !quote?.checkoutEnabled && !error ? 'Test checkout is being connected. Your bag stays saved.' : 'A little green, one step closer.'}</div>
+          <div role="status" className="cart-status">{actionLabel ?? (pending ? 'Continue safely, or release your reserved items to edit.' : loading ? 'Checking the latest prices & availability…' : !quote?.canCheckout && !error ? 'A little update is needed above before checkout.' : !quote?.checkoutEnabled && !error ? 'Test checkout is being connected. Your bag stays saved.' : 'A little green, one step closer.')}</div>
           {checkoutError && <p className="cart-checkout-error" role="alert">{checkoutError}</p>}
-          <button className="button button-dark checkout-button" disabled={pendingLoading || checkingOut || !quote?.checkoutEnabled || (!pending && (loading || !quote.canCheckout))} onClick={() => void checkout()}>{checkingOut ? <><span className="loading-dot" /> Opening Stripe…</> : <><Icon name="lock" size={17} /><span>{pending ? 'Continue test checkout' : 'Test checkout'}</span><Icon name="arrow" size={18} /></>}</button>
+          <button
+            type="button"
+            className="button button-dark checkout-button"
+            aria-busy={cartAction === 'opening'}
+            disabled={pendingLoading || cartAction !== null || !quote?.checkoutEnabled || (!pending && (loading || !quote.canCheckout))}
+            onClick={() => void checkout()}
+          >
+            {cartAction === 'opening'
+              ? <><span className="loading-dot" aria-hidden="true" /> {actionLabel}</>
+              : <><Icon name="lock" size={17} /><span>{pending ? 'Continue test checkout' : 'Test checkout'}</span><Icon name="arrow" size={18} /></>}
+          </button>
           <div className="checkout-trust"><span>Secure checkout with <strong>stripe</strong></span><span className="test-mode-pill">TEST MODE</span></div>
         </div>
       </>}

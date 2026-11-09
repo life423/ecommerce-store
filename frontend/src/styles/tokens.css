@@ -9,6 +9,14 @@
   font-synthesis:none;
   font-weight:400;
   --green:#253e2e;
+  --green-hover:#36533c;
+  --green-pressed:#192e21;
+  --button-ink:#fffef5;
+  --button-border:#74846b;
+  --button-tint:#eaf0e3;
+  --clay:#8a432f;
+  --clay-tint:#f6e6dc;
+  --clay-tint-hover:#efd8ca;
   --cream:#f5f2e9;
   --line:#e3e5db;
   --muted:#73796d;
