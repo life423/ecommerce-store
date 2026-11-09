@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { BADGES, CATEGORIES, CatalogError, publicProduct, STATUSES, validateProduct } from './product.js'
 import { findRelatedProducts } from './related.js'
-import { homepagePlacement } from './homepage.js'
+import { homepageLimit, homepagePlacement, homepageProductIds } from './homepage.js'
 
 const featuredSort = { featured: -1, createdAt: -1, _id: 1 }
 const availableProducts = { status: 'active', inventory: { $gt: 0 } }
@@ -105,11 +105,15 @@ export function catalogRoutes({ Product, HomepageSelection, databaseStatus, edit
 
   router.get('/homepage-product', async (_req, res) => {
     const choice = await HomepageSelection.findById(homepagePlacement).lean()
-    const pinned = choice?.productId
-      ? await Product.findOne({ _id: choice.productId, ...availableProducts }).lean()
-      : null
-    const product = pinned ?? await Product.findOne(availableProducts).sort(featuredSort).lean()
-    res.set('Cache-Control', 'no-store').json({ product: product ? publicProduct(product) : null })
+    const ids = homepageProductIds(choice)
+    const pinned = ids.length ? await Product.find({ _id: { $in: ids }, ...availableProducts }).lean() : []
+    const byId = new Map(pinned.map(product => [String(product._id), product]))
+    const products = ids.map(id => byId.get(String(id))).filter(Boolean).map(product => publicProduct(product))
+    if (!products.length) {
+      const fallback = await Product.findOne(availableProducts).sort(featuredSort).lean()
+      if (fallback) products.push(publicProduct(fallback))
+    }
+    res.set('Cache-Control', 'no-store').json({ product: products[0] ?? null, products })
   })
 
   // The app mounts staff authorization before these routes.
@@ -120,24 +124,45 @@ export function catalogRoutes({ Product, HomepageSelection, databaseStatus, edit
   })
   router.get('/admin/homepage-product', async (_req, res) => {
     const choice = await HomepageSelection.findById(homepagePlacement).lean()
-    if (!choice?.productId) return res.json({ selection: null })
-    const product = await Product.findById(choice.productId).select('name status inventory').lean()
-    res.json({ selection: {
-      id: String(choice.productId),
-      name: product?.name ?? 'Removed product',
-      available: product?.status === 'active' && product.inventory > 0,
-    } })
+    const ids = homepageProductIds(choice)
+    const products = ids.length ? await Product.find({ _id: { $in: ids } }).select('name status inventory').lean() : []
+    const byId = new Map(products.map(product => [String(product._id), product]))
+    const selections = ids.map(id => {
+      const product = byId.get(String(id))
+      return { id: String(id), name: product?.name ?? 'Removed product', available: product?.status === 'active' && product.inventory > 0 }
+    })
+    res.json({ selections, limit: homepageLimit, revision: choice?.revision ?? 0 })
   })
   router.put('/admin/homepage-product', async (req, res) => {
-    const productId = req.body?.productId
-    if (productId !== null && (typeof productId !== 'string' || !/^[a-f\d]{24}$/i.test(productId))) {
-      throw new CatalogError(422, 'INVALID_PRODUCT', 'Choose a valid product or use automatic selection.')
+    const { productIds, revision } = req.body ?? {}
+    if (!Array.isArray(productIds) || productIds.length > homepageLimit ||
+      productIds.some(id => typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id)) ||
+      !Number.isSafeInteger(revision) || revision < 0) {
+      throw new CatalogError(422, 'INVALID_HOMEPAGE_SELECTION', `Choose up to ${homepageLimit} products.`)
     }
-    if (productId && !await Product.exists({ _id: productId, ...availableProducts })) {
-      throw new CatalogError(422, 'PRODUCT_UNAVAILABLE', 'Choose a published product that is in stock.')
+    const ids = productIds.map(id => id.toLowerCase())
+    if (new Set(ids).size !== ids.length) throw new CatalogError(422, 'DUPLICATE_PRODUCT', 'Choose each product once.')
+
+    const choice = await HomepageSelection.findById(homepagePlacement).lean()
+    const conflict = new CatalogError(409, 'HOMEPAGE_SELECTION_CHANGED', 'The homepage lineup changed in another session. Review the latest lineup and try again.')
+    if ((choice?.revision ?? 0) !== revision) throw conflict
+    const previousIds = new Set(homepageProductIds(choice).map(String))
+    const added = ids.filter(id => !previousIds.has(id))
+    if (added.length && await Product.countDocuments({ _id: { $in: added }, ...availableProducts }) !== added.length) {
+      throw new CatalogError(422, 'PRODUCT_UNAVAILABLE', 'Choose published products that are in stock.')
     }
-    await HomepageSelection.updateOne({ _id: homepagePlacement }, { $set: { productId } }, { upsert: true })
-    res.json({ productId })
+    try {
+      const filter = { _id: homepagePlacement, revision: choice?.revision ?? { $exists: false } }
+      const result = await HomepageSelection.updateOne(filter, {
+        $set: { productIds: ids, revision: revision + 1 },
+        $unset: { productId: '' },
+      }, { upsert: !choice, runValidators: true })
+      if (!result.matchedCount && !result.upsertedCount) throw conflict
+    } catch (error) {
+      if (error.code === 11000) throw conflict
+      throw error
+    }
+    res.json({ revision: revision + 1 })
   })
   router.get('/admin/products', (req, res) => list(req, res, true))
   router.get('/admin/products/:id', async (req, res) => {

@@ -122,40 +122,51 @@ test('catalog integration with real MongoDB', { skip: !process.env.TEST_MONGO_UR
     const info = await send('/catalog')
     assert.equal(info.data.categories.reduce((sum, item) => sum + item.count, 0), 6)
   })
-  await t.test('pins one staff-selected homepage product and falls back when it cannot be bought', async () => {
+  await t.test('preserves the old homepage choice, orders multiple products, and skips unavailable items', async () => {
     const path = '/admin/homepage-product'
     const catalogPath = '/products?sort=featured&inStock=true&limit=1'
-    const hero = async () => (await send('/homepage-product')).data.product
+    const hero = async () => (await send('/homepage-product')).data.products
+    const heroIds = async () => (await hero()).map(product => product.id)
     const automatic = (await send(catalogPath)).data.items[0]
     const choices = (await send('/admin/products?status=active&inStock=true')).data.items.filter(item => item.id !== automatic.id)
     const [first, second] = choices
-    const firstChoice = { productId: first.id }
+    const firstChoice = { productIds: [first.id, second.id], revision: 0 }
 
-    assert.deepEqual(await hero(), automatic)
+    assert.deepEqual(await hero(), [automatic])
     assert.equal((await send(path, 'PUT', firstChoice, { Cookie: '' })).status, 401)
     assert.equal((await send(path, 'PUT', firstChoice, { Origin: 'https://attacker.example' })).status, 403)
-    assert.equal((await send(path, 'PUT', { productId: { $ne: null } })).status, 422)
-    assert.equal((await send(path, 'PUT', { productId: created.id })).status, 422)
+    assert.equal((await send(path, 'PUT', { productIds: [{ $ne: null }], revision: 0 })).status, 422)
+    assert.equal((await send(path, 'PUT', { productIds: [created.id], revision: 0 })).status, 422)
+    assert.equal((await send(path, 'PUT', { productIds: [first.id, first.id.toUpperCase()], revision: 0 })).status, 422)
+    assert.equal((await send(path, 'PUT', { productIds: [first.id, second.id, automatic.id, created.id], revision: 0 })).status, 422)
+
+    await HomepageSelection.collection.insertOne({ _id: 'homepage', productId: new mongoose.Types.ObjectId(first.id) })
+    assert.deepEqual(await heroIds(), [first.id])
+    assert.equal((await send(path)).data.selections[0].id, first.id)
     assert.equal((await send(path, 'PUT', firstChoice)).status, 200)
-    assert.equal((await hero()).id, first.id)
-    assert.equal((await hero()).sku, undefined)
+    assert.deepEqual(await heroIds(), [first.id, second.id])
+    assert.ok((await hero()).every(product => product.sku === undefined))
     assert.equal((await send(catalogPath)).data.items[0].id, automatic.id)
 
-    assert.equal((await send(path, 'PUT', { productId: second.id })).status, 200)
-    assert.equal((await hero()).id, second.id)
+    const attempts = await Promise.all([
+      send(path, 'PUT', { productIds: [second.id, first.id], revision: 1 }),
+      send(path, 'PUT', { productIds: [second.id, first.id], revision: 1 }),
+    ])
+    assert.deepEqual(attempts.map(response => response.status).sort(), [200, 409])
+    assert.deepEqual(await heroIds(), [second.id, first.id])
     await Product.updateOne({ _id: second.id }, { inventory: 0 })
-    assert.deepEqual((await send(path)).data.selection, { id: second.id, name: second.name, available: false })
-    assert.equal((await hero()).id, automatic.id)
-    assert.equal((await send(path, 'PUT', { productId: second.id })).status, 422)
+    assert.deepEqual((await send(path)).data.selections[0], { id: second.id, name: second.name, available: false })
+    assert.deepEqual(await heroIds(), [first.id])
+    await Product.updateOne({ _id: first.id }, { status: 'archived' })
+    assert.deepEqual(await heroIds(), [automatic.id])
+    assert.equal((await send(path, 'PUT', { productIds: [second.id], revision: 2 })).status, 200)
     await Product.updateOne({ _id: second.id }, { inventory: second.inventory })
-    assert.equal((await hero()).id, second.id)
-    await Product.updateOne({ _id: second.id }, { status: 'archived' })
-    assert.equal((await hero()).id, automatic.id)
-    await Product.updateOne({ _id: second.id }, { status: 'active' })
+    await Product.updateOne({ _id: first.id }, { status: 'active' })
+    assert.deepEqual(await heroIds(), [second.id])
 
-    assert.equal((await send(path, 'PUT', { productId: null })).status, 200)
-    assert.deepEqual((await send(path)).data, { selection: null })
-    assert.equal((await hero()).id, automatic.id)
+    assert.equal((await send(path, 'PUT', { productIds: [], revision: 3 })).status, 200)
+    assert.deepEqual((await send(path)).data, { selections: [], limit: 3, revision: 4 })
+    assert.deepEqual(await heroIds(), [automatic.id])
   })
   await t.test('recommends live complements and fills unavailable slots without duplicates', async () => {
     const suggested = ['genovese-basil-seeds', 'indoor-potting-blend', 'cream-ledge-watering-can']

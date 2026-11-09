@@ -11,7 +11,7 @@ function mockApi(handler?: (url: string, options?: RequestInit) => unknown) {
     ok: true, status: 200, json: async () => {
       if (url === '/api/catalog') return catalog
       if (handler) return handler(url, options)
-      return url === '/api/homepage-product' ? { product } : result()
+      return url === '/api/homepage-product' ? { products: [product] } : result()
     },
   }))
   vi.stubGlobal('fetch', mock)
@@ -98,7 +98,7 @@ describe('product studio', () => {
     let saved: Record<string, unknown> | undefined
     const fetchMock = mockApi((url, options) => {
       if (url === '/api/admin/session') return { staff: { username: 'test-owner', expiresAt: new Date(Date.now() + 60000).toISOString() } }
-      if (url === '/api/admin/homepage-product') return { selection: null }
+      if (url === '/api/admin/homepage-product') return { selections: [], limit: 3, revision: 0 }
       if (options?.method === 'POST') { saved = JSON.parse(String(options.body)); return { product: { ...product, ...saved } } }
       return result([])
     })
@@ -116,30 +116,49 @@ describe('product studio', () => {
     expect(saved?.status).toBe('draft')
     expect(fetchMock.mock.calls.some(([url, options]) => url === '/api/admin/products' && options?.method === 'POST')).toBe(true)
   })
-  it('sets or clears a homepage product independently of saving its details', async () => {
+  it('adds, reorders, and removes homepage products independently of saving their details', async () => {
     window.history.replaceState(null, '', '/studio')
-    let choice: string | null = null
+    const other = { ...product, id: '456', name: 'The Seed Kit', sku: 'RW-SEED-02' }
+    const items = [product, other]
+    let ids: string[] = []
+    let revision = 0
     const fetchMock = mockApi((url, options) => {
       if (url === '/api/admin/session') return { staff: { username: 'test-owner', expiresAt: new Date(Date.now() + 60000).toISOString() } }
       if (url === '/api/admin/homepage-product') {
-        if (options?.method === 'PUT') choice = JSON.parse(String(options.body)).productId
-        return { selection: choice ? { id: choice, name: product.name, available: true } : null }
+        if (options?.method === 'PUT') {
+          const body = JSON.parse(String(options.body))
+          expect(body.revision).toBe(revision)
+          ids = body.productIds
+          revision += 1
+        }
+        return { selections: ids.map(id => ({ id, name: items.find(item => item.id === id)?.name, available: true })), limit: 3, revision }
       }
-      return result()
+      return result(items)
     })
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: new RegExp(product.name) }))
-    const placement = within(screen.getByRole('region', { name: 'Homepage product' }))
-    const feature = placement.getByRole('button', { name: 'Feature on homepage' })
-    await waitFor(() => expect(feature).toBeEnabled())
-    fireEvent.click(feature)
-    expect(await placement.findByText(product.name)).toBeInTheDocument()
-    expect(choice).toBe(product.id)
+    const placement = within(await screen.findByRole('region', { name: 'Homepage products' }))
+    for (const item of items) {
+      fireEvent.click(await screen.findByRole('button', { name: new RegExp(item.name) }))
+      const add = placement.getByRole('button', { name: 'Add to homepage' })
+      await waitFor(() => expect(add).toBeEnabled())
+      fireEvent.click(add)
+      await placement.findByText(item.name)
+    }
+    expect(ids).toEqual([product.id, other.id])
+    const move = placement.getByRole('button', { name: `Move ${other.name} up` })
+    await waitFor(() => expect(move).toBeEnabled())
+    fireEvent.click(move)
+    await waitFor(() => expect(move).toBeDisabled())
+    const remove = placement.getByRole('button', { name: `Remove ${product.name} from homepage` })
+    await waitFor(() => expect(remove).toBeEnabled())
+    expect(ids).toEqual([other.id, product.id])
+    fireEvent.click(remove)
+    await waitFor(() => expect(placement.queryByText(product.name, { exact: true })).not.toBeInTheDocument())
     const clear = placement.getByRole('button', { name: 'Use automatic selection' })
     await waitFor(() => expect(clear).toBeEnabled())
     fireEvent.click(clear)
-    await placement.findByText('The store automatically shows an in-stock product.')
-    expect(choice).toBeNull()
+    await placement.findByText(/when the lineup is empty/)
+    expect(ids).toEqual([])
     expect(fetchMock.mock.calls.some(([url, options]) => url.startsWith('/api/admin/products') && options?.method === 'PUT')).toBe(false)
   })
   it('rejects fractional cents before posting a product', async () => {

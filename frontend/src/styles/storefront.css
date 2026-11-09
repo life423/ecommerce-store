@@ -7,7 +7,24 @@
 .hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; }
 .hero-guide-link { min-height: 44px; color: var(--green); font-size: .8125rem; text-decoration: underline; text-underline-offset: 4px; }
 .hero-image, .hero-feature, .hero-feature-placeholder { position: relative; min-width: 0; background: #e8eadf; }
+.hero-carousel { position: relative; display: grid; min-width: 0; }
 .hero-feature { display: grid; align-items: end; isolation: isolate; }
+.hero-feature-swipeable { touch-action: pan-y pinch-zoom; }
+.hero-carousel-controls {
+  position: absolute;
+  top: calc(var(--header-height) + 16px);
+  right: clamp(16px, 3vw, 40px);
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fffefb;
+  font-size: .8125rem;
+  font-variant-numeric: tabular-nums;
+}
+.hero-carousel-controls .button { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 .hero-feature-photo { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
 .hero-feature-photo > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .hero-feature-copy {
@@ -126,6 +143,8 @@
   .hero-feature-copy { flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; margin: 0; padding: 9px 12px; border: 0; }
   .hero-feature-facts a { font-size: 1.125rem; }
   .hero-feature .add-to-bag { max-width: 100%; }
+  .hero-feature-swipeable { margin-bottom: 0; }
+  .hero-carousel-controls { position: static; justify-self: end; margin: 4px 20px 10px; }
   .collection { padding-top: 24px; }
   .section-heading { margin-bottom: 25px; }
   .section-heading h2 { font-size: clamp(1.85rem, 6.5vw, 2.4rem); line-height: 1.16; max-width: 26rem; }

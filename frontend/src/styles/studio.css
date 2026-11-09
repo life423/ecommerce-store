@@ -193,6 +193,10 @@
 .homepage-placement-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .homepage-placement-actions:not(:empty) { margin-top: .65rem; }
 .homepage-placement-actions .button { min-height: 44px; padding: .55rem .8rem; }
+.homepage-lineup { display: grid; gap: .5rem; margin-block: .75rem; padding-inline-start: 1.5rem; list-style: decimal; }
+.homepage-lineup li { border-block-end: 1px solid var(--line); padding: .35rem 0 .65rem .25rem; font-size: .875rem; }
+.homepage-lineup li > div:first-child { display: grid; gap: .2rem; }
+.homepage-lineup li > div:first-child span { color: var(--clay); }
 
 .studio-product {
   display:flex;
