@@ -5,6 +5,9 @@ export function CatalogImage({ src, alt, sizes = '(max-width: 760px) 45vw, (max-
   const [failedSource, setFailedSource] = useState<string | null>(null)
   const failed = failedSource !== null && failedSource === src
   const bundled = src && /^\/images\/(hero|planter|seeds|light|tools|water|greens)\.jpg$/.test(src)
-  const srcSet = bundled ? `${src.replace('.jpg', '-480.jpg')} 480w, ${src.replace('.jpg', '-960.jpg')} 960w, ${src} ${src.includes('hero') ? 1536 : 1254}w` : undefined
+  const demoPhoto = src && /^\/images\/demo-[a-z0-9-]+\.jpg$/.test(src) && !src.endsWith('-480.jpg')
+  const srcSet = bundled
+    ? `${src.replace('.jpg', '-480.jpg')} 480w, ${src.replace('.jpg', '-960.jpg')} 960w, ${src} ${src.includes('hero') ? 1536 : 1254}w`
+    : demoPhoto ? `${src.replace('.jpg', '-480.jpg')} 480w, ${src} 960w` : undefined
   return <img {...props} src={failed ? '/product-placeholder.svg' : src} alt={failed ? `${alt ?? 'Product'} · image unavailable` : alt} srcSet={failed ? undefined : srcSet} sizes={!failed && srcSet ? sizes : undefined} onError={() => setFailedSource(src ?? '')} />
 }

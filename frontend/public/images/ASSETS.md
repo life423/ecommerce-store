@@ -2,6 +2,12 @@
 
 Original fictional-product imagery generated with the built-in image generation tool for this portfolio concept. These do not depict verified products for sale.
 
+## Expanded demo catalog
+
+The 100 `demo-*.jpg` product photos were each generated with the built-in image tool. The product subjects and image descriptions are in [the demo product manifest](../../../backend/src/catalog/expanded-samples.js). The shared prompt called for a square e-commerce catalog photograph on a warm oatmeal seamless backdrop with soft light from the upper left, realistic shadows and materials, and comfortable margins. Planters use a three-quarter view. The remaining photos use centered arrangements. Prompts excluded people, lettering, logos, watermarks, collages, and unrelated props.
+
+Each image has a 960 px version for product views and a 480 px version for smaller cards and thumbnails.
+
 ## hero.jpg
 
 Use case: photorealistic-natural. Asset type: wide website hero photograph for REWILD, a fictional premium urban growing store. Landscape 3:2. A beautiful sunlit small city balcony overflowing with potted culinary herbs, leafy greens, climbing tomato plants in warm terracotta planters, a little wooden bench and cream stucco walls. Golden morning light through foliage, authentic verdant leaves, tactile terracotta and warm wood, quietly aspirational editorial garden magazine photography. No people, no text, no logos, no overlay. Fill the frame richly, focus on the plants, natural realistic texture.
