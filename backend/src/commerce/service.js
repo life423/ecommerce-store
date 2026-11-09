@@ -124,7 +124,7 @@ export function createCommerce({ Product, Order, stripe, storeUrl, webhookSecret
       const expiresAt = new Date(Date.now() + 35 * 60 * 1000)
       const snapshots = cart.items.map(line => ({ productId: line.productId, name: line.product.name, slug: line.product.slug, image: line.product.images[0], unitPriceCents: line.product.priceCents, quantity: line.quantity }))
       const sessionParams = {
-        mode: 'payment', payment_method_types: ['card'], client_reference_id: id, metadata: { orderId: id, store: 'rewild' },
+        mode: 'payment', allowed_payment_method_types: ['card'], client_reference_id: id, metadata: { orderId: id, store: 'rewild' },
         line_items: snapshots.map(line => ({ quantity: line.quantity, price_data: { currency: 'usd', unit_amount: line.unitPriceCents, product_data: { name: line.name } } })),
         expires_at: Math.floor(expiresAt.getTime() / 1000),
         success_url: `${storeUrl}/checkout/success?order_id=${id}&token=${token}`,
