@@ -1,12 +1,22 @@
 import { Router } from 'express'
 import { BADGES, CATEGORIES, CatalogError, publicProduct, STATUSES, validateProduct } from './product.js'
 
+const spaceProducts = {
+  balcony: ['RW-PLANTER-01', 'RW-TOOLS-01'],
+  windowsill: ['RW-GREENS-01', 'RW-SEEDS-01'],
+  indoors: ['RW-KIT-01', 'RW-WATER-01'],
+}
+
 function parseQuery(query, admin) {
-  const allowed = ['q', 'category', 'sort', 'page', 'limit', 'inStock', 'minPrice', 'maxPrice', ...(admin ? ['status'] : [])]
+  const allowed = ['q', 'category', 'sort', 'page', 'limit', 'inStock', 'minPrice', 'maxPrice', admin ? 'status' : 'space']
   for (const [key, value] of Object.entries(query)) {
     if (!allowed.includes(key) || typeof value !== 'string') throw new CatalogError(400, 'INVALID_QUERY', 'Unsupported catalog filter.')
   }
   const filter = admin ? {} : { status: 'active' }
+  if (query.space !== undefined) {
+    if (!Object.hasOwn(spaceProducts, query.space)) throw new CatalogError(400, 'INVALID_QUERY', 'Invalid growing space.')
+    filter.sku = { $in: spaceProducts[query.space] }
+  }
   if (admin && query.status) {
     if (!STATUSES.includes(query.status)) throw new CatalogError(400, 'INVALID_QUERY', 'Invalid product status.')
     filter.status = query.status

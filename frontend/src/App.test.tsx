@@ -48,6 +48,21 @@ describe('storefront catalog', () => {
     fireEvent.click(screen.getByRole('button', { name: /Try again/ }))
     expect(await screen.findByText('Nothing growing here. Yet.')).toBeInTheDocument()
   })
+  it('opens a shareable space filter and removes it without clearing the category', async () => {
+    window.history.replaceState(null, '', '/?space=balcony&category=Planters')
+    const fetchMock = mockApi()
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: /the windowsill/i })).toHaveAttribute('href', '/?space=windowsill#collection')
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('space=balcony') && url.includes('category=Planters'))).toBe(true))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove the balcony filter' }))
+    await waitFor(() => {
+      const [lastRequest] = fetchMock.mock.calls.slice(-1)
+      expect(lastRequest?.[0]).toContain('category=Planters')
+      expect(lastRequest?.[0]).not.toContain('space=')
+    })
+    expect(window.location.search).not.toContain('space=')
+  })
   it('debounces search and keeps the selected filters in the URL', async () => {
     const fetchMock = mockApi()
     render(<App />)

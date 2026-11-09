@@ -43,6 +43,19 @@ test('catalog integration with real MongoDB', { skip: !process.env.TEST_MONGO_UR
       assert.equal((await send(`/products?${query}`)).status, 400, query)
     }
   })
+  await t.test('curates products across categories and composes with stock and category filters', async () => {
+    const windowsill = await send('/products?space=windowsill')
+    assert.equal(windowsill.status, 200)
+    assert.deepEqual(windowsill.data.items.map(item => item.slug).sort(), ['the-kitchen-garden-seeds', 'the-windowsill-greens-kit'])
+
+    const available = await send('/products?space=windowsill&inStock=true')
+    assert.deepEqual(available.data.items.map(item => item.slug), ['the-kitchen-garden-seeds'])
+    const planters = await send('/products?space=balcony&category=Planters')
+    assert.deepEqual(planters.data.items.map(item => item.slug), ['the-balcony-grow-box'])
+
+    assert.equal((await send('/products?space=constructor')).status, 400)
+    assert.equal((await send('/admin/products?space=balcony')).status, 400)
+  })
   await t.test('requires explicit editor access and blocks cross-site requests', async () => {
     assert.equal((await fetch(`${base}/admin/products`)).status, 403)
     assert.equal((await send('/admin/products', 'POST', draft, { Origin: 'https://attacker.example' })).status, 403)
