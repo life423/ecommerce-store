@@ -6,6 +6,7 @@ import { Icon } from '../components/Icon'
 import { AddToCart } from '../components/AddToCart'
 import { ProductPhotos } from '../components/ProductPhotos'
 import { ProductAtAGlance } from '../components/ProductAtAGlance'
+import { RelatedProducts } from '../components/RelatedProducts'
 
 export function ProductPage({ slug }: { slug: string }) {
   const [attempt, setAttempt] = useState(0)
@@ -44,6 +45,7 @@ export function ProductPage({ slug }: { slug: string }) {
           <a className="text-link product-keep-exploring" href="/#collection">Keep exploring <Icon name="arrow" /></a>
         </div>
       </div>
+      <RelatedProducts key={product.id} slug={product.slug} />
     </main>
   )
 }

@@ -239,18 +239,6 @@
     font-size:8px;
     margin-top:12px
   }
-  .approach {
-    grid-template-columns:1fr;
-    gap:25px;
-    padding-block:35px
-  }
-  .approach h2 {
-    font-size:31px
-  }
-  .approach p {
-    font-size:11px;
-    max-width:none
-  }
   .footer-top {
     padding-block:30px
   }

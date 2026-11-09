@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CatalogInfo, Product, ProductList } from '../lib/catalog'
 import { useResource } from '../lib/useResource'
 import { shopSpaces } from '../lib/shopSpaces'
@@ -9,6 +9,7 @@ import { QuickView } from '../components/QuickView'
 import { Reveal } from '../components/Reveal'
 import { FilterSheet } from '../components/FilterSheet'
 import { ShopBySpace } from '../components/ShopBySpace'
+import { ApproachStory } from '../components/ApproachStory'
 import type { CatalogFilters } from '../components/FilterSheet'
 
 export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | null; onOpenGuide: () => void }) {
@@ -26,6 +27,7 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
   const [filtersOpen, setFiltersOpen] = useState(false)
   const collection = useRef<HTMLElement>(null)
   const resultsSummary = useRef<HTMLSpanElement>(null)
+  const restoreApproach = useRef(window.location.hash === '#approach')
   useEffect(() => {
     const timer = setTimeout(() => setSearch(query), 300)
     return () => clearTimeout(timer)
@@ -37,6 +39,14 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
   if (inStock) params.set('inStock', 'true')
   const queryString = params.toString()
   const products = useResource<ProductList>(`/products?${queryString}`, attempt)
+  useLayoutEffect(() => {
+    if (products.loading || !restoreApproach.current) return
+    restoreApproach.current = false
+    // The loaded catalog can change the height above the story after the initial hash scroll.
+    if (window.location.hash === '#approach') {
+      document.getElementById('approach')?.scrollIntoView({ behavior: 'instant', block: 'start' })
+    }
+  }, [products.loading])
   useEffect(() => { window.history.replaceState(null, '', `${window.location.pathname}?${queryString}${window.location.hash}`) }, [queryString])
   function chooseCategory(value: string) { setCategory(value); setPage(1) }
   function reset() { setQuery(''); setSearch(''); setCategory(''); setSpaceId(null); setInStock(false); setSort('featured'); setPage(1) }
@@ -97,7 +107,7 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
         </div>
       </div>
     </section>
-    <Reveal><section id="approach" className="approach page-width"><div><span className="eyebrow">GROW SOMETHING. FEEL SOMETHING.</span><h2>You don’t need a big garden.<br />Just a small beginning.</h2></div><div><p>We believe a little growing can change the way you see your everyday. The first new leaf. The herbs you picked yourself. The small things that turn a space into your place.</p><a href="/?category=Growing+kits#collection">Start with a growing kit <Icon name="arrow" size={18} /></a></div></section></Reveal>
+    <ApproachStory onOpenGuide={onOpenGuide} />
     {quickView && <QuickView key={quickView.id} product={quickView} onDismiss={() => setQuickView(null)} />}
     {filtersOpen && <FilterSheet categories={catalog?.categories ?? []} current={{ category, inStock, sort }} onApply={applyFilters} onDismiss={() => setFiltersOpen(false)} />}
   </>

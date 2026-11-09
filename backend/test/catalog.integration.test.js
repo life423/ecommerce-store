@@ -6,6 +6,7 @@ import mongoose from 'mongoose'
 import { createApp } from '../src/app.js'
 import { createProductModel, validateProduct } from '../src/catalog/product.js'
 import { sampleProducts } from '../src/catalog/samples.js'
+import { expandedSampleProducts } from '../src/catalog/expanded-samples.js'
 
 test('catalog integration with real MongoDB', { skip: !process.env.TEST_MONGO_URI }, async t => {
   // Every run owns a fresh database; it never clears the application database.
@@ -93,6 +94,26 @@ test('catalog integration with real MongoDB', { skip: !process.env.TEST_MONGO_UR
     assert.equal((await Product.findById(created.id)).status, 'archived')
     const info = await send('/catalog')
     assert.equal(info.data.categories.reduce((sum, item) => sum + item.count, 0), 6)
+  })
+  await t.test('recommends live complements and fills unavailable slots without duplicates', async () => {
+    const suggested = ['genovese-basil-seeds', 'indoor-potting-blend', 'cream-ledge-watering-can']
+    await Product.create(expandedSampleProducts.filter(item => suggested.includes(item.slug)).map(validateProduct))
+
+    const path = '/products/the-balcony-grow-box/related'
+    const related = await send(path)
+    assert.equal(related.status, 200)
+    assert.deepEqual(related.data.items.map(item => item.slug), suggested)
+    assert.ok(related.data.items.every(item => item.inventory > 0 && item.sku === undefined))
+
+    const fromBlend = await send('/products/indoor-potting-blend/related')
+    assert.equal(fromBlend.data.items.length, 3)
+    assert.ok(fromBlend.data.items.every(item => item.slug !== 'indoor-potting-blend'))
+
+    await Product.updateOne({ slug: 'indoor-potting-blend' }, { status: 'archived' })
+    await Product.updateOne({ slug: 'cream-ledge-watering-can' }, { inventory: 0 })
+    const fallback = await send(path)
+    assert.deepEqual(fallback.data.items.map(item => item.slug), ['genovese-basil-seeds', 'the-everyday-tool-set', 'the-slow-pour'])
+    assert.equal((await send('/products/indoor-potting-blend/related')).status, 404)
   })
   await t.test('fails clearly instead of buffering queries when MongoDB is unavailable', async () => {
     database = 'disconnected'

@@ -98,7 +98,6 @@
   .price { font-size: 13px; }
   .product-badge { left: 8px; top: 8px; font-size: 8px; padding: 6px 7px; }
   .card-stock { padding-top: 12px; font-size: 9px; line-height: 1.5; }
-  .approach { padding-block: 37px; }
   .footer-bottom { font-size: 10px; }
 }
 @media (max-width: 360px) {

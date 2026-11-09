@@ -15,7 +15,6 @@
 .product-form fieldset:disabled { opacity: .7; }
 .studio-product strong { font-size: .8125rem; }
 .studio-product small, .form-actions > span { font-size: .6875rem; }
-.approach p { font-size: .875rem; }
 .error-notice:focus { outline: 2px solid #914c36; outline-offset: 3px; }
 .footer-bottom { font-size: .6875rem; line-height: 1.6; }
 @media (hover: none) {
@@ -28,7 +27,6 @@
   .search-field input { font-size: .75rem; }
   .category-list button { font-size: .75rem; }
   .product-form input:not([type=checkbox]), .product-form textarea, .product-form select { font-size: 1rem; }
-  .approach p { font-size: .8125rem; }
 }
 @media (max-width: 420px) {
   .hero h1 { font-size: clamp(2.75rem, 14vw, 3.5rem); }

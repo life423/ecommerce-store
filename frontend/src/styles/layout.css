@@ -200,29 +200,7 @@
   margin-left:10px
 }
 
-.approach {
-  display:grid;
-  grid-template-columns:1.1fr 1fr;
-  gap:80px;
-  border-top:1px solid var(--line);
-  padding-block:48px 60px
-}
-
-.approach h2 {
-  font:35px/1.2 Georgia,serif;
-  letter-spacing:-.8px;
-  margin:15px 0 0
-}
-
-.approach p {
-  font-size:12px;
-  line-height:1.9;
-  color:#72796a;
-  max-width:380px;
-  margin:0 0 20px
-}
-
-.approach a,.text-link {
+.text-link {
   display:inline-flex;
   gap:12px;
   align-items:center;

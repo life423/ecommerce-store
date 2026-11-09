@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { BADGES, CATEGORIES, CatalogError, publicProduct, STATUSES, validateProduct } from './product.js'
+import { findRelatedProducts } from './related.js'
 
 const spaceProducts = {
   balcony: ['RW-PLANTER-01', 'RW-TOOLS-01'],
@@ -80,12 +81,22 @@ export function catalogRoutes({ Product, databaseStatus, editorEnabled }) {
     res.set('Cache-Control', 'no-store').json({ items: products.map(product => publicProduct(product, admin)),
       pagination: { page, limit, total, pages: Math.ceil(total / limit) } })
   }
+  async function findActiveProduct(slug) {
+    if (!/^[a-z0-9-]{1,140}$/.test(slug)) throw new CatalogError(404, 'NOT_FOUND', 'Product not found.')
+    const product = await Product.findOne({ slug, status: 'active' }).lean()
+    if (!product) throw new CatalogError(404, 'NOT_FOUND', 'Product not found.')
+    return product
+  }
+
   router.get('/products', (req, res) => list(req, res))
   router.get('/products/:slug', async (req, res) => {
-    if (!/^[a-z0-9-]{1,140}$/.test(req.params.slug)) throw new CatalogError(404, 'NOT_FOUND', 'Product not found.')
-    const product = await Product.findOne({ slug: req.params.slug, status: 'active' }).lean()
-    if (!product) throw new CatalogError(404, 'NOT_FOUND', 'Product not found.')
+    const product = await findActiveProduct(req.params.slug)
     res.json({ product: publicProduct(product) })
+  })
+  router.get('/products/:slug/related', async (req, res) => {
+    const product = await findActiveProduct(req.params.slug)
+    const related = await findRelatedProducts(Product, product)
+    res.set('Cache-Control', 'no-store').json({ items: related.map(item => publicProduct(item)) })
   })
 
   // Local development tool only. Never enabled in production by server configuration.
