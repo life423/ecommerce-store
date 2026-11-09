@@ -8,6 +8,21 @@
 .collection { padding-top: 70px; }
 .section-heading { margin-bottom: 36px; }
 .section-heading h2 { font-size: clamp(2rem, 3vw, 2.6rem); }
+.collection-heading {
+  display: grid;
+  grid-template: "eyebrow ." auto "title space" auto / minmax(0, 1fr) auto;
+  gap: 0 .65rem;
+}
+.collection-heading .eyebrow { grid-area: eyebrow; }
+.collection-heading h2 { grid-area: title; }
+.collection-space-link {
+  grid-area: space;
+  min-height: 44px;
+  gap: .35rem;
+  font-size: .8125rem;
+  justify-self: end;
+}
+.collection-space-link svg { flex-shrink: 0; }
 .catalog-toolbar { align-items: center; min-height: 54px; }
 .search-field { min-height: 44px; }
 .search-field:focus-within { color: var(--green); }
@@ -68,7 +83,7 @@
   .hero h1 { font-size: clamp(3.1rem, 10.5vw, 4.5rem); margin: 22px 0 20px; letter-spacing: -2px; }
   .hero-copy > p { font-size: 14px; line-height: 1.8; max-width: 30rem; margin-bottom: 23px; }
   .hero-footnote { font-size: 10px; margin-top: 22px; }
-  .hero-image { min-height: 280px; height: 66vw; max-height: 400px; }
+  .hero-image { min-height: 220px; height: 54vw; max-height: 370px; }
   .hero-image > img { object-position: center 58%; }
   .hero-image-note { bottom: 22px; left: 24px; right: 24px; }
   .hero-image-note > span:first-child { font-size: 27px; }
@@ -77,6 +92,8 @@
   .collection { padding-top: 38px; }
   .section-heading { margin-bottom: 25px; }
   .section-heading h2 { font-size: clamp(1.85rem, 6.5vw, 2.4rem); line-height: 1.16; max-width: 26rem; }
+  .collection-heading { grid-template-areas: "eyebrow space" "title title"; align-items: center; }
+  .collection-heading h2 { margin-top: .2rem; }
   .catalog-layout { display: block; }
   .filters { display: none; }
   .mobile-category-strip { display: flex; overflow-x: auto; gap: 8px; padding: 1px 0 15px; margin-right: -20px; padding-right: 20px; scrollbar-width: thin; scrollbar-color: #b7c4ab transparent; }

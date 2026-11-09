@@ -27,7 +27,7 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
   const [filtersOpen, setFiltersOpen] = useState(false)
   const collection = useRef<HTMLElement>(null)
   const resultsSummary = useRef<HTMLSpanElement>(null)
-  const restoreApproach = useRef(window.location.hash === '#approach')
+  const initialCatalogLoad = useRef(true)
   useEffect(() => {
     const timer = setTimeout(() => setSearch(query), 300)
     return () => clearTimeout(timer)
@@ -40,11 +40,12 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
   const queryString = params.toString()
   const products = useResource<ProductList>(`/products?${queryString}`, attempt)
   useLayoutEffect(() => {
-    if (products.loading || !restoreApproach.current) return
-    restoreApproach.current = false
-    // The loaded catalog can change the height above the story after the initial hash scroll.
-    if (window.location.hash === '#approach') {
-      document.getElementById('approach')?.scrollIntoView({ behavior: 'instant', block: 'start' })
+    if (products.loading || !initialCatalogLoad.current) return
+    initialCatalogLoad.current = false
+    // The loaded product grid can shift sections below it after the initial hash scroll.
+    const hash = window.location.hash
+    if (hash === '#approach' || hash === '#shop-by-space') {
+      document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'instant', block: 'start' })
     }
   }, [products.loading])
   useEffect(() => { window.history.replaceState(null, '', `${window.location.pathname}?${queryString}${window.location.hash}`) }, [queryString])
@@ -61,7 +62,7 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
         <span className="eyebrow"><span className="tiny-star">✳</span> A little space. A lot of possibility.</span>
         <h1><span className="hero-title-line"><span>Good things</span></span><span className="hero-title-line"><span>start <em>small.</em></span></span></h1>
         <p>A windowsill. A balcony. A little corner of your world.<br className="desktop-break" /> Growing kits, seeds, and tools to bring it to life.</p>
-        <a className="button button-dark" href="#collection">Find your little garden <Icon name="arrow" /></a>
+        <a className="button button-dark" href="#collection">Shop products <Icon name="arrow" /></a>
         <button type="button" className="hero-guide-link" aria-haspopup="dialog" onClick={onOpenGuide}>New to growing? Find your starting point <Icon name="arrow" size={16} /></button>
         <div className="hero-footnote"><span className="hand-drawn-leaf"><Icon name="leaf" size={24} /></span> For the growers. And the not-yet-growers.</div>
       </div>
@@ -69,10 +70,14 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
     </section>
     <div className="values-strip"><span><Icon name="leaf" size={17} /> Small-space friendly</span><span>Good tools. Simple beginnings.</span><span>Grow a little, every day.</span><span className="values-end">Rooted in possibility <span>↗</span></span></div>
 
-    <ShopBySpace />
-
     <section id="collection" className="collection page-width" ref={collection}>
-      <Reveal><div className="section-heading"><div><span className="eyebrow">THE GROWING COLLECTION</span><h2>A little green goes a long way.</h2></div><p>Thoughtful essentials for your<br />next small beginning.</p></div></Reveal>
+      <Reveal>
+        <div className="section-heading collection-heading">
+          <span className="eyebrow">THE GROWING COLLECTION</span>
+          <h2>A little green goes a long way.</h2>
+          <a className="text-link collection-space-link" href="#shop-by-space">Shop by space <Icon name="arrow" size={16} /></a>
+        </div>
+      </Reveal>
       <div className="mobile-category-strip" aria-label="Browse categories"><button aria-pressed={!category} onClick={() => chooseCategory('')}>All good things</button>{(catalog?.categories ?? []).map(item => <button key={item.name} aria-label={`Browse ${item.name}`} aria-pressed={category === item.name} onClick={() => chooseCategory(item.name)}>{item.name}</button>)}</div>
       <div className="catalog-layout">
         <aside className="filters" aria-label="Product filters">
@@ -107,6 +112,7 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
         </div>
       </div>
     </section>
+    <ShopBySpace />
     <ApproachStory onOpenGuide={onOpenGuide} />
     {quickView && <QuickView key={quickView.id} product={quickView} onDismiss={() => setQuickView(null)} />}
     {filtersOpen && <FilterSheet categories={catalog?.categories ?? []} current={{ category, inStock, sort }} onApply={applyFilters} onDismiss={() => setFiltersOpen(false)} />}

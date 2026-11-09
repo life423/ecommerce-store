@@ -1,6 +1,6 @@
 .shop-spaces {
   padding-block: clamp(2.75rem, 6vw, 5.25rem);
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
 }
 
 .section-heading.shop-spaces-heading > p {
