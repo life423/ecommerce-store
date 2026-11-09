@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError } from './catalog'
 
-export function useResource<T>(path: string, refresh = 0, editor = false) {
+export function useResource<T>(path: string, refresh = 0) {
   const [result, setResult] = useState<{ data: T | null; error: ApiError | null; loading: boolean }>({ data: null, error: null, loading: true })
   useEffect(() => {
     const controller = new AbortController()
@@ -10,7 +10,7 @@ export function useResource<T>(path: string, refresh = 0, editor = false) {
     async function load() {
       setResult(previous => ({ ...previous, loading: true, error: null }))
       try {
-        const data = await api<T>(path, { signal: controller.signal, ...(editor ? { headers: { 'X-Catalog-Editor': 'local' } } : {}) })
+        const data = await api<T>(path, { signal: controller.signal })
         if (active) setResult({ data, error: null, loading: false })
       } catch (error) {
         if (active) setResult({ data: null, error: error instanceof ApiError ? error : new ApiError('The connection timed out. Please try again.'), loading: false })
@@ -18,6 +18,6 @@ export function useResource<T>(path: string, refresh = 0, editor = false) {
     }
     void load()
     return () => { active = false; clearTimeout(timeout); controller.abort() }
-  }, [path, refresh, editor])
+  }, [path, refresh])
   return result
 }

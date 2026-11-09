@@ -3,7 +3,7 @@ import type { CatalogInfo } from './lib/catalog'
 import { useResource } from './lib/useResource'
 import { CatalogPage } from './pages/CatalogPage'
 import { ProductPage } from './pages/ProductPage'
-import { StudioPage } from './pages/StudioPage'
+import { StaffWorkspace } from './pages/StaffWorkspace'
 import { Icon } from './components/Icon'
 import { SiteHeader } from './components/SiteHeader'
 import { CartProvider } from './components/CartProvider'
@@ -31,7 +31,7 @@ function Storefront() {
   }, [])
   const catalog = useResource<CatalogInfo>('/catalog')
   const path = window.location.pathname.replace(/\/$/, '')
-  const isStudio = path === '/studio'
+  const isStudio = path === '/studio' || path === '/studio/orders'
   const productMatch = /^\/products\/([^/]+)$/.exec(path)
   return <>
     <a className="skip-link" href="#main-content">Skip to content</a>
@@ -41,7 +41,7 @@ function Storefront() {
       {path === '' ? <main><CatalogPage catalog={catalog.data} onOpenGuide={openGuide} /></main>
         : productMatch ? <ProductPage slug={productMatch[1]} />
           : ['/checkout/success', '/checkout/cancel'].includes(path) ? <CheckoutPage cancel={path.endsWith('/cancel')} />
-          : isStudio ? catalog.loading ? <main className="page-width empty-state" aria-busy="true"><p>Opening your product studio…</p></main> : catalog.data ? <StudioPage catalog={catalog.data} /> : <main className="page-width empty-state" role="alert"><h1>The studio is taking a pause.</h1><p>{catalog.error?.message}</p><a href="/studio" className="text-link">Try again <Icon name="arrow" /></a></main>
+          : isStudio ? <StaffWorkspace catalog={catalog.data} catalogLoading={catalog.loading} orders={path === '/studio/orders'} />
             : <main className="page-width empty-state"><h1>Let’s get you growing again.</h1><p>This page isn’t here, but your next little garden might be.</p><a className="button button-dark" href="/">Back to the store <Icon name="arrow" /></a></main>}
     </div>
     {guideOpen && <GrowingGuide onDismiss={() => setGuideOpen(false)} />}

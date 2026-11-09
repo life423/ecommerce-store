@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { api, ApiError, centsFromInput, editorHeaders, money } from '../lib/catalog'
+import { api, ApiError, centsFromInput, money } from '../lib/catalog'
 import type { AdminProduct, CatalogInfo, ProductInput, ProductList } from '../lib/catalog'
 import { useResource } from '../lib/useResource'
 import { Icon } from '../components/Icon'
@@ -9,7 +9,7 @@ type Form = { name: string; slug: string; sku: string; description: string; cate
 const blank = (): Form => ({ name: '', slug: '', sku: '', description: '', category: 'Growing kits', price: '', originalPrice: '', inventory: '0', status: 'draft', featured: false, badge: '', images: [{ url: '', alt: '' }], highlights: '' })
 const toForm = (product: AdminProduct): Form => ({ name: product.name, slug: product.slug, sku: product.sku, description: product.description, category: product.category, price: (product.priceCents / 100).toFixed(2), originalPrice: product.compareAtPriceCents === null ? '' : (product.compareAtPriceCents / 100).toFixed(2), inventory: String(product.inventory), status: product.status, featured: product.featured, badge: product.badge, images: product.images.map(image => ({ ...image })), highlights: product.highlights.join('\n') })
 
-export function StudioPage({ catalog }: { catalog: CatalogInfo }) {
+export function StudioPage({ catalog, onSessionExpired }: { catalog: CatalogInfo; onSessionExpired: () => void }) {
   const [refresh, setRefresh] = useState(0)
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<AdminProduct | null>(null)
@@ -20,8 +20,10 @@ export function StudioPage({ catalog }: { catalog: CatalogInfo }) {
   const [notice, setNotice] = useState('')
   const errorSummary = useRef<HTMLDivElement>(null)
   useEffect(() => { if (error) errorSummary.current?.focus() }, [error])
-  const products = useResource<ProductList<AdminProduct>>(`/admin/products?limit=12&page=${page}&sort=newest`, refresh, true)
-  if (!catalog.editorEnabled) return <main className="page-width empty-state"><h1>The product studio is local-only.</h1><p>Enable it in your development configuration to manage the catalog.</p><a className="text-link" href="/">Return to the store <Icon name="arrow" /></a></main>
+  const products = useResource<ProductList<AdminProduct>>(`/admin/products?limit=12&page=${page}&sort=newest`, refresh)
+  useEffect(() => {
+    if (products.error?.status === 401 || error?.status === 401) onSessionExpired()
+  }, [products.error, error, onSessionExpired])
 
   function choose(product: AdminProduct | null) {
     if (dirty && !window.confirm('Discard the unsaved changes to this product?')) return
@@ -33,7 +35,7 @@ export function StudioPage({ catalog }: { catalog: CatalogInfo }) {
   async function reloadProduct() {
     if (!selected) return
     try {
-      const data = await api<{ product: AdminProduct }>(`/admin/products/${selected.id}`, { headers: editorHeaders })
+      const data = await api<{ product: AdminProduct }>(`/admin/products/${selected.id}`)
       setSelected(data.product); setForm(toForm(data.product)); setDirty(false); setError(null); setRefresh(value => value + 1)
     } catch (failure) { setError(failure instanceof ApiError ? failure : new ApiError('Unable to reload the product.')) }
   }
@@ -51,7 +53,11 @@ export function StudioPage({ catalog }: { catalog: CatalogInfo }) {
     const body: ProductInput = { name: form.name, slug: form.slug, sku: form.sku, description: form.description, category: form.category, priceCents: priceCents!, compareAtPriceCents, currency: 'usd', inventory: Number(form.inventory), status: form.status, featured: form.featured, badge: form.badge, images: form.images, highlights: form.highlights.split('\n').map(value => value.trim()).filter(Boolean), ...(selected ? { version: selected.version } : {}) }
     setSaving(true)
     try {
-      const data = await api<{ product: AdminProduct }>(selected ? `/admin/products/${selected.id}` : '/admin/products', { method: selected ? 'PUT' : 'POST', headers: editorHeaders, body: JSON.stringify(body) })
+      const data = await api<{ product: AdminProduct }>(selected ? `/admin/products/${selected.id}` : '/admin/products', {
+        method: selected ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
       setSelected(data.product); setForm(toForm(data.product)); setDirty(false); setNotice(selected ? 'Product saved.' : 'Product created.'); setRefresh(value => value + 1)
     } catch (failure) { setError(failure instanceof ApiError ? failure : new ApiError('Unable to save the product.')) }
     finally { setSaving(false) }
@@ -59,9 +65,9 @@ export function StudioPage({ catalog }: { catalog: CatalogInfo }) {
   const fieldError = (key: string) => error?.fields[key] ? <span className="field-error" id={`error-${key}`}>{error.fields[key]}</span> : null
   const invalid = (key: string) => ({ 'aria-invalid': !!error?.fields[key], 'aria-describedby': error?.fields[key] ? `error-${key}` : undefined })
 
-  return <main className="page-width studio-page">
+  return <>
     <div className="studio-heading"><div><span className="eyebrow">BEHIND THE GREEN</span><h1>Product studio.</h1><p>A little care for everything in your collection.</p></div><a className="text-link" href="/">View the storefront <Icon name="arrow" /></a></div>
-    <div className="studio-note"><Icon name="leaf" size={19} /> Local development workspace. Products save to MongoDB; only active products appear in the store.</div>
+    <div className="studio-note"><Icon name="leaf" size={19} /> Only active products appear in the store.</div>
     <div className="studio-layout"><aside className="studio-list"><div className="studio-list-heading"><h2>Your products</h2><button className="icon-button" onClick={() => choose(null)} aria-label="Add a new product"><Icon name="plus" /></button></div>
       {products.loading && <p className="muted">Loading your collection…</p>}
       {products.error && <div role="alert"><p>{products.error.message}</p><button className="text-link" onClick={() => setRefresh(value => value + 1)}>Try again</button></div>}
@@ -94,5 +100,5 @@ export function StudioPage({ catalog }: { catalog: CatalogInfo }) {
         <div className="form-actions"><span>{dirty ? 'You have unsaved changes.' : selected ? 'All changes saved.' : 'Drafts stay behind the scenes.'}</span><button type="submit" className="button button-dark">{saving ? 'Saving…' : selected ? 'Save changes' : 'Create product'}<Icon name="arrow" size={18} /></button></div>
       </fieldset>
     </form></div>
-  </main>
+  </>
 }

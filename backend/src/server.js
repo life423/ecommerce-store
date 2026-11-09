@@ -5,6 +5,7 @@ import { createProductModel } from './catalog/product.js'
 import Stripe from 'stripe'
 import { createOrderModel } from './commerce/order.js'
 import { createCommerce } from './commerce/service.js'
+import { createStaffModels } from './staff/accounts.js'
 
 let config
 try {
@@ -31,12 +32,16 @@ if (config.mongoUri) {
 
 const Product = createProductModel()
 const Order = createOrderModel()
-if (config.mongoUri) await Promise.all([Product.init(), Order.init()])
+const staffModels = config.nodeEnv === 'production' ? {} : createStaffModels()
+if (config.mongoUri) await Promise.all([Product, Order, ...Object.values(staffModels)].map(model => model.init()))
 const stripe = config.stripeSecretKey ? new Stripe(config.stripeSecretKey, { timeout: 10_000, maxNetworkRetries: 2 }) : null
 const commerce = createCommerce({ Product, Order, stripe, storeUrl: config.storeUrl, webhookSecret: config.webhookSecret })
 console.log(commerce.enabled ? 'Stripe test checkout enabled' : 'Stripe test checkout awaiting server configuration')
 const app = createApp({
   productModel: Product,
+  orderModel: Order,
+  staffModels,
+  nodeEnv: config.nodeEnv,
   commerce, storeUrl: config.storeUrl,
   editorEnabled: config.editorEnabled,
   databaseStatus: () => !config.mongoUri

@@ -82,10 +82,11 @@ describe('storefront catalog', () => {
 })
 
 describe('product studio', () => {
-  it('converts dollar input to cents and creates a draft with the explicit local editor header', async () => {
+  it('opens the editor for a signed-in staff member and saves a draft in cents', async () => {
     window.history.replaceState(null, '', '/studio')
     let saved: Record<string, unknown> | undefined
-    const fetchMock = mockApi((_url, options) => {
+    const fetchMock = mockApi((url, options) => {
+      if (url === '/api/admin/session') return { staff: { username: 'test-owner', expiresAt: new Date(Date.now() + 60000).toISOString() } }
       if (options?.method === 'POST') { saved = JSON.parse(String(options.body)); return { product: { ...product, ...saved } } }
       return result([])
     })
@@ -101,7 +102,7 @@ describe('product studio', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Product created.')
     expect(saved?.priceCents).toBe(1999)
     expect(saved?.status).toBe('draft')
-    expect(fetchMock.mock.calls.some(([, options]) => options?.method === 'POST' && (options.headers as Record<string, string>)['X-Catalog-Editor'] === 'local')).toBe(true)
+    expect(fetchMock.mock.calls.some(([url, options]) => url === '/api/admin/products' && options?.method === 'POST')).toBe(true)
   })
   it('rejects fractional cents before posting a product', async () => {
     expect(centsFromInput('19.99')).toBe(1999)

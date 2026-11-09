@@ -1,6 +1,6 @@
 # Cart and Stripe test checkout
 
-REWILD has a persistent guest bag, hosted Stripe test checkout, signed webhooks, order snapshots, and inventory reservations. It cannot accept live API keys or real payments. Product imagery and merchandise are fictional; no fulfillment, taxes, accounts, refunds, or production administration are implemented.
+REWILD has a persistent guest bag, hosted Stripe test checkout, signed webhooks, order snapshots, and inventory reservations. It cannot accept live API keys or real payments. Product imagery and merchandise are fictional; fulfillment, taxes, customer accounts, and refunds are outside the test checkout flow.
 
 ## Connect locally
 
@@ -24,6 +24,8 @@ The existing CLI login is separate from the application's server API key. A work
 | `GET /api/checkout/:id` | Requires `Authorization: Bearer <guest token>`. Verifies current Stripe status and returns a minimal receipt/state. No email, address, card data, Stripe secret, or database internals. |
 | `POST /api/checkout/:id/cancel` | Same token; expires an open Stripe session, then releases inventory after verifying expiry. A completed payment is reconciled as paid. |
 | `POST /api/stripe/webhook` | Exact raw body, verified Stripe signature, test events only. Handles completion, expiry, and asynchronous success. Retrieves current session state to tolerate stale event payloads. |
+
+The staff workspace at `/studio/orders` reads recorded REWILD test orders through `GET /api/admin/orders`. It shows line items and the latest payment status recorded by the checkout service. The response excludes guest access tokens and Stripe session identifiers. See the [staff workspace setup](../README.md#staff-workspace-and-catalog).
 
 Return URLs include the guest capability token. Treat them as private receipt links and do not put full query strings into analytics/logs. The token is hashed for lookup; the original is retained privately for deterministic return URLs and checkout retry. No customer contact/address/card data is stored by REWILD. Stripe holds the test checkout details.
 

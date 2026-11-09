@@ -1,6 +1,6 @@
 # REWILD — small beginnings, good things
 
-An original small-space gardening e-commerce portfolio concept built with React, TypeScript, Tailwind, Express, and MongoDB. The catalog, product pages, guest bag, test-checkout integration, and local product studio are functional. Connect a Stripe server test key and webhook listener to enable hosted checkout. Accounts and live payments are future work. All sample products and product imagery are fictional.
+An original small-space gardening e-commerce portfolio concept built with React, TypeScript, Tailwind, Express, and MongoDB. The catalog, product pages, guest bag, test-checkout integration, and protected staff workspace are functional. Connect a Stripe server test key and webhook listener to enable hosted checkout. Customer accounts and live payments are future work. All sample products and product imagery are fictional.
 
 ## Local development
 
@@ -20,7 +20,7 @@ npm run db:up
 cp backend/.env.example backend/.env
 ```
 
-Uncomment `MONGO_URI` in `backend/.env`, run `npm run seed`, then restart `npm run dev`. The example also enables the local product studio at http://localhost:5173/studio. The API validates its configuration and refuses startup when a configured database cannot be reached. `npm run db:down` stops MongoDB without deleting data. Keep real credentials in ignored `.env` files; never put secrets in frontend variables or client code.
+Uncomment `MONGO_URI` in `backend/.env`, run `npm run seed`, then restart `npm run dev`. The API validates its configuration and refuses startup when a configured database cannot be reached. `npm run db:down` stops MongoDB without deleting data. Keep real credentials in ignored `.env` files; never put secrets in frontend variables or client code.
 
 ## Checks
 
@@ -62,7 +62,7 @@ The MongoDB volume persists through `docker compose down`. Do not delete `ecomme
 
 `npm run build` creates `frontend/dist`. To inspect the build locally, run the API (`npm start`) and, in another terminal, `npm run preview -w frontend`; the preview server also proxies `/api`. Vite preview is a local inspection tool.
 
-Production hosting must serve the built frontend and route `/api` to the API behind HTTPS. Configure an authenticated database, production secrets, and `NODE_ENV=production`. Before launching live commerce, complete authentication/authorization, durable operational jobs and reconciliation, production rate limits, tax/shipping configuration, and fulfillment. The current order, inventory-hold, and webhook implementation is documented in docs/CHECKOUT.md. The catalog does not accept real orders or payments. Set `ENABLE_CATALOG_EDITOR=false` in production; the server rejects any attempt to enable the local editor with `NODE_ENV=production`. A production admin area must have real authentication and authorization.
+Production hosting must serve the built frontend and route `/api` to the API behind HTTPS. Configure an authenticated database, production secrets, and `NODE_ENV=production`. Before launching live commerce, review staff account management and access controls, and complete durable operational jobs and reconciliation, production rate limits, tax/shipping configuration, and fulfillment. The current order, inventory-hold, and webhook implementation is documented in docs/CHECKOUT.md. The catalog does not accept real orders or payments. Set `ENABLE_CATALOG_EDITOR=false` in production. The server disables the staff workspace and rejects the development-only Studio link setting with `NODE_ENV=production`.
 
 ## Layout
 
@@ -82,25 +82,43 @@ Dependency versions were selected against their engine and peer requirements rat
 At setup time, `npm audit --omit=dev` reported zero vulnerabilities. The full audit reported 12 moderate entries tracing to a single [Minimatch advisory](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249) in ESLint's development dependency tree. This is a tooling concern, not an exposed application route. The proposed automatic fixes downgrade major tooling versions; no forced downgrades or incompatible dependency overrides were applied. Revisit this when ESLint and TypeScript ESLint adopt the patched Minimatch release.
 
 
-## Catalog and product studio
+## Staff workspace and catalog
 
-Open `/studio` to create products, edit descriptions/images/prices/inventory, publish drafts, and archive items. Draft is the default; only `active` products are public. Add images as HTTPS URLs or bundled `/images/*.jpg` assets and supply descriptive alt text. Up to five images and six highlights are supported. The editor displays validation and duplicate-identity errors without discarding form input; version checks reject overwriting a newer edit.
+The staff workspace runs in local development. Create an account from the repository root after configuring MongoDB.
+
+```sh
+# Docker
+docker compose exec backend npm run staff:create -w backend -- <username>
+
+# Native
+npm run staff:create -w backend -- <username>
+```
+
+Replace `<username>` with a staff username. The command prints a generated password once. Store it in a password manager. Open [the staff workspace](http://localhost:5173/studio) and sign in. Use the exact origin configured in `STORE_URL`. The default is `http://localhost:5173`.
+
+Use **Products** to create products, edit descriptions/images/prices/inventory, publish drafts, and archive items. Draft is the default; only `active` products are public. Add images as HTTPS URLs or bundled `/images/*.jpg` assets and supply descriptive alt text. Up to five images and six highlights are supported. The editor displays validation and duplicate-identity errors without discarding form input; version checks reject overwriting a newer edit.
+
+Use **Test orders** at `/studio/orders` to review REWILD test orders, line items, and the latest recorded payment status. The list supports status filters and pagination. It reads REWILD’s database and reflects verification by the checkout service. Refresh reloads the records without contacting Stripe or changing an order.
 
 The catalog model stores unique SKU and slug indexes, category, plain-text description, exact integer `priceCents`, optional `compareAtPriceCents`, explicit `usd` currency, integer stock, lifecycle status, featured/badge fields, images, highlights, timestamps, and an optimistic version. Checkout orders hold immutable product/price snapshots, guest access tokens, Stripe session state, and inventory reservations. Variants and live payments are not implemented.
 
 | Route | Behavior |
 | --- | --- |
-| `GET /api/catalog` | Categories/counts and local editor availability. |
+| `GET /api/catalog` | Categories and counts, plus the development-only Studio link setting. |
 | `GET /api/products` | Active products; `q`, `category`, `sort`, `inStock`, `minPrice`, `maxPrice`, `page`, `limit`. Price filters use cents. |
 | `GET /api/products/:slug` | One active public product. |
-| `GET /api/admin/products` | Local editor list including draft/archived items. Supports a `status` filter. |
+| `POST /api/admin/sign-in` | Verifies staff credentials and sets a session cookie. |
+| `GET /api/admin/session` | Returns the signed-in staff account and session expiry. |
+| `POST /api/admin/sign-out` | Revokes the current session and clears its cookie. |
+| `GET /api/admin/orders` | Read-only order snapshots. Accepts `page` and `state`. |
+| `GET /api/admin/products` | Staff catalog list including draft and archived items. Accepts `status`. |
 | `GET /api/admin/products/:id` | Fetch latest editor version of a product. |
 | `POST /api/admin/products` | Create a validated product. |
 | `PUT /api/admin/products/:id` | Replace editable fields; requires the current `version`. |
 
 Sort values: `featured`, `newest`, `price-asc`, `price-desc`, `name`. Pagination defaults to 12 and caps at 48 per page. Unknown filters, array/object filter inputs, unsafe write fields, fractional cents, and invalid inventory are rejected. Search escapes regular-expression metacharacters. Duplicate slug/SKU and version conflicts return `409`; validation errors return `422`; unavailable database returns `503`. Updates are atomic with a version predicate.
 
-**Editor boundary:** `ENABLE_CATALOG_EDITOR=true` works only in development. Editor requests require `X-Catalog-Editor: local`, JSON writes, and approved local browser origins; cross-site requests are rejected. These checks protect this loopback-only development tool from incidental browser requests. They are not authentication and must not be used for a public management interface. Docker publishes ports to loopback only. Public product reads do not expose draft status, SKU, or the internal edit version.
+The admin API requires an active staff account and a server-verified session. Sessions expire after eight hours. The session cookie is HTTP-only, same-site, and secure on HTTPS. Staff API writes require the configured storefront origin. In development, `ENABLE_CATALOG_EDITOR=true` displays the Studio link in the storefront header. The link and direct workspace URLs both require staff sign-in. Public product reads omit draft status, SKU, and the internal edit version.
 
 `npm run seed` (native) or `docker compose exec backend npm run seed -w backend` (Docker) adds the six REWILD samples with insert-only upserts keyed by SKU. Rerunning preserves edits and never resets stock or deletes products. Samples are blocked in production. Manual image replacement does not upload a file; provide a hosted URL or add a static image and rebuild.
 

@@ -46,5 +46,3 @@ export function centsFromInput(value: string): number | null {
   const cents = Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
   return Number.isSafeInteger(cents) ? cents : null
 }
-
-export const editorHeaders = { 'Content-Type': 'application/json', 'X-Catalog-Editor': 'local' }

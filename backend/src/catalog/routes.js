@@ -99,17 +99,9 @@ export function catalogRoutes({ Product, databaseStatus, editorEnabled }) {
     res.set('Cache-Control', 'no-store').json({ items: related.map(item => publicProduct(item)) })
   })
 
-  // Local development tool only. Never enabled in production by server configuration.
-  // A custom header and strict same-origin checks block cross-site browser writes.
-  router.use('/admin', (req, _res, next) => {
-    if (!editorEnabled) throw new CatalogError(403, 'EDITOR_DISABLED', 'The local product studio is disabled.')
-    if (req.get('X-Catalog-Editor') !== 'local') throw new CatalogError(403, 'EDITOR_FORBIDDEN', 'Use the local product studio.')
-    const origin = req.get('Origin')
-    if (origin) {
-      const allowed = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:4173', 'http://127.0.0.1:4173']
-      if (!allowed.includes(origin)) throw new CatalogError(403, 'EDITOR_FORBIDDEN', 'This origin cannot access the product studio.')
-    }
-    if (req.get('Sec-Fetch-Site') === 'cross-site') throw new CatalogError(403, 'EDITOR_FORBIDDEN', 'Cross-site access is not allowed.')
+  // The app mounts staff authorization before these routes.
+  router.use('/admin/products', (req, res, next) => {
+    if (!res.locals.staff) throw new CatalogError(401, 'STAFF_REQUIRED', 'Sign in to access the staff workspace.')
     if (['POST', 'PUT'].includes(req.method) && !req.is('application/json')) throw new CatalogError(415, 'JSON_REQUIRED', 'Send a JSON product object.')
     next()
   })
