@@ -169,6 +169,31 @@
   margin:0
 }
 
+.studio-search { display: grid; gap: .35rem; margin-bottom: 1rem; font-size: .8125rem; font-weight: 600; }
+.studio-search input {
+  width: 100%;
+  min-height: 44px;
+  padding: .5rem .65rem;
+  border: 1px solid var(--button-border);
+  border-radius: 4px;
+  background: #fffefb;
+  font-size: 1rem;
+  font-weight: 400;
+}
+.homepage-placement {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #f7f6ee;
+  overflow-wrap: anywhere;
+}
+.homepage-placement h3 { margin: 0 0 .35rem; font-size: 1rem; font-weight: 600; }
+.homepage-placement p { margin: .35rem 0; color: var(--green); font-size: .875rem; line-height: 1.55; }
+.homepage-placement-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.homepage-placement-actions:not(:empty) { margin-top: .65rem; }
+.homepage-placement-actions .button { min-height: 44px; padding: .55rem .8rem; }
+
 .studio-product {
   display:flex;
   align-items:center;

@@ -4,6 +4,7 @@ import { api, ApiError, centsFromInput, money } from '../lib/catalog'
 import type { AdminProduct, CatalogInfo, ProductInput, ProductList } from '../lib/catalog'
 import { useResource } from '../lib/useResource'
 import { Icon } from '../components/Icon'
+import { HomepagePlacement } from '../components/HomepagePlacement'
 
 type Form = { name: string; slug: string; sku: string; description: string; category: string; price: string; originalPrice: string; inventory: string; status: 'draft' | 'active' | 'archived'; featured: boolean; badge: string; images: { url: string; alt: string }[]; highlights: string }
 const blank = (): Form => ({ name: '', slug: '', sku: '', description: '', category: 'Growing kits', price: '', originalPrice: '', inventory: '0', status: 'draft', featured: false, badge: '', images: [{ url: '', alt: '' }], highlights: '' })
@@ -12,6 +13,8 @@ const toForm = (product: AdminProduct): Form => ({ name: product.name, slug: pro
 export function StudioPage({ catalog, onSessionExpired }: { catalog: CatalogInfo; onSessionExpired: () => void }) {
   const [refresh, setRefresh] = useState(0)
   const [page, setPage] = useState(1)
+  const [query, setQuery] = useState('')
+  const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<AdminProduct | null>(null)
   const [form, setForm] = useState<Form>(blank)
   const [dirty, setDirty] = useState(false)
@@ -20,7 +23,13 @@ export function StudioPage({ catalog, onSessionExpired }: { catalog: CatalogInfo
   const [notice, setNotice] = useState('')
   const errorSummary = useRef<HTMLDivElement>(null)
   useEffect(() => { if (error) errorSummary.current?.focus() }, [error])
-  const products = useResource<ProductList<AdminProduct>>(`/admin/products?limit=12&page=${page}&sort=newest`, refresh)
+  useEffect(() => {
+    const timer = window.setTimeout(() => { setSearch(query.trim()); setPage(1) }, 250)
+    return () => window.clearTimeout(timer)
+  }, [query])
+  const params = new URLSearchParams({ limit: '12', page: String(page), sort: 'newest' })
+  if (search) params.set('q', search)
+  const products = useResource<ProductList<AdminProduct>>(`/admin/products?${params}`, refresh)
   useEffect(() => {
     if (products.error?.status === 401 || error?.status === 401) onSessionExpired()
   }, [products.error, error, onSessionExpired])
@@ -69,13 +78,17 @@ export function StudioPage({ catalog, onSessionExpired }: { catalog: CatalogInfo
     <div className="studio-heading"><div><span className="eyebrow">BEHIND THE GREEN</span><h1>Product studio.</h1><p>A little care for everything in your collection.</p></div><a className="text-link" href="/">View the storefront <Icon name="arrow" /></a></div>
     <div className="studio-note"><Icon name="leaf" size={19} /> Only active products appear in the store.</div>
     <div className="studio-layout"><aside className="studio-list"><div className="studio-list-heading"><h2>Your products</h2><button className="icon-button" onClick={() => choose(null)} aria-label="Add a new product"><Icon name="plus" /></button></div>
+      <label className="studio-search"><span>Find a product</span>
+        <input type="search" placeholder="Name or SKU" maxLength={100} value={query} onChange={event => setQuery(event.target.value)} />
+      </label>
       {products.loading && <p className="muted">Loading your collection…</p>}
       {products.error && <div role="alert"><p>{products.error.message}</p><button className="text-link" onClick={() => setRefresh(value => value + 1)}>Try again</button></div>}
       {products.data?.items.map(product => <button key={product.id} className={`studio-product ${selected?.id === product.id ? 'selected' : ''}`} onClick={() => choose(product)}><img src={product.images[0].url} alt="" width="54" height="54" /><span><strong>{product.name}</strong><small>{money(product.priceCents)} · {product.inventory} in stock</small><span className={`status-pill status-${product.status}`}>{product.status}</span></span></button>)}
-      {!products.loading && products.data?.items.length === 0 && <p className="muted">Your first good thing starts here. Add a product to get growing.</p>}
+      {!products.loading && products.data?.items.length === 0 && <p className="muted">{search ? 'No products match your search.' : 'Your first good thing starts here. Add a product to get growing.'}</p>}
       {products.data && products.data.pagination.pages > 1 && <div className="pagination"><button disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</button><span>{page}/{products.data.pagination.pages}</span><button disabled={page >= products.data.pagination.pages} onClick={() => setPage(value => value + 1)}>Next</button></div>}
     </aside><form className="product-form" onSubmit={save} noValidate>
       <div className="form-heading"><div><h2>{selected ? 'Edit product' : 'A new good thing'}</h2><p>{selected ? selected.sku : 'Start as a draft. Publish when you are ready.'}</p></div>{selected?.status === 'active' && <a href={`/products/${selected.slug}`} className="text-link">Preview <Icon name="arrow" size={16} /></a>}</div>
+      <HomepagePlacement product={selected} productRefresh={refresh} editing={dirty || saving} onSessionExpired={onSessionExpired} />
       {notice && <div role="status" className="success-notice"><Icon name="check" size={18} />{notice}</div>}
       {error && <div role="alert" ref={errorSummary} tabIndex={-1} className="error-notice"><p>{error.message}</p>{error.status === 409 && error.message.includes('another session') && <button type="button" className="text-link" onClick={() => void reloadProduct()}>Reload latest product</button>}</div>}
       <fieldset disabled={saving}>

@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import { createApp } from './app.js'
 import { readConfig } from './config.js'
 import { createProductModel } from './catalog/product.js'
+import { createHomepageModel } from './catalog/homepage.js'
 import Stripe from 'stripe'
 import { createOrderModel } from './commerce/order.js'
 import { createCommerce } from './commerce/service.js'
@@ -31,14 +32,16 @@ if (config.mongoUri) {
 }
 
 const Product = createProductModel()
+const HomepageSelection = createHomepageModel()
 const Order = createOrderModel()
 const staffModels = config.nodeEnv === 'production' ? {} : createStaffModels()
-if (config.mongoUri) await Promise.all([Product, Order, ...Object.values(staffModels)].map(model => model.init()))
+if (config.mongoUri) await Promise.all([Product, HomepageSelection, Order, ...Object.values(staffModels)].map(model => model.init()))
 const stripe = config.stripeSecretKey ? new Stripe(config.stripeSecretKey, { timeout: 10_000, maxNetworkRetries: 2 }) : null
 const commerce = createCommerce({ Product, Order, stripe, storeUrl: config.storeUrl, webhookSecret: config.webhookSecret })
 console.log(commerce.enabled ? 'Stripe test checkout enabled' : 'Stripe test checkout awaiting server configuration')
 const app = createApp({
   productModel: Product,
+  homepageModel: HomepageSelection,
   orderModel: Order,
   staffModels,
   nodeEnv: config.nodeEnv,

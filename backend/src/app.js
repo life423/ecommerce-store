@@ -5,7 +5,7 @@ import { CatalogError } from './catalog/product.js'
 import { commerceRoutes } from './commerce/routes.js'
 import { staffRoutes } from './staff/routes.js'
 
-export function createApp({ databaseStatus = () => 'disabled', logger = console, productModel, editorEnabled = false, commerce, staffModels, orderModel, nodeEnv = 'development', storeUrl = 'http://localhost:5173' } = {}) {
+export function createApp({ databaseStatus = () => 'disabled', logger = console, productModel, homepageModel, editorEnabled = false, commerce, staffModels, orderModel, nodeEnv = 'development', storeUrl = 'http://localhost:5173' } = {}) {
   const app = express()
   app.disable('x-powered-by')
   app.use(helmet())
@@ -40,7 +40,7 @@ export function createApp({ databaseStatus = () => 'disabled', logger = console,
   } else {
     app.use('/api/admin', staffRoutes({ ...staffModels, Order: orderModel, databaseStatus, storeUrl }))
   }
-  app.use('/api', catalogRoutes({ Product: productModel, databaseStatus, editorEnabled }))
+  app.use('/api', catalogRoutes({ Product: productModel, HomepageSelection: homepageModel, databaseStatus, editorEnabled }))
 
   app.use((_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } })

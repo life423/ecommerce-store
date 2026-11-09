@@ -7,7 +7,13 @@ const product = { id: '123', name: 'The Balcony Grow Box', slug: 'the-balcony-gr
 const catalog = { categories: [{ name: 'Planters', count: 1 }, { name: 'Growing kits', count: 0 }], editorEnabled: true, databaseConnected: true, currency: 'usd', badges: ['', 'New'] }
 const result = (items = [product]) => ({ items, pagination: { page: 1, limit: 6, total: items.length, pages: 1 } })
 function mockApi(handler?: (url: string, options?: RequestInit) => unknown) {
-  const mock = vi.fn(async (url: string, options?: RequestInit) => ({ ok: true, status: 200, json: async () => url === '/api/catalog' ? catalog : handler ? handler(url, options) : result() }))
+  const mock = vi.fn(async (url: string, options?: RequestInit) => ({
+    ok: true, status: 200, json: async () => {
+      if (url === '/api/catalog') return catalog
+      if (handler) return handler(url, options)
+      return url === '/api/homepage-product' ? { product } : result()
+    },
+  }))
   vi.stubGlobal('fetch', mock)
   return mock
 }
@@ -92,6 +98,7 @@ describe('product studio', () => {
     let saved: Record<string, unknown> | undefined
     const fetchMock = mockApi((url, options) => {
       if (url === '/api/admin/session') return { staff: { username: 'test-owner', expiresAt: new Date(Date.now() + 60000).toISOString() } }
+      if (url === '/api/admin/homepage-product') return { selection: null }
       if (options?.method === 'POST') { saved = JSON.parse(String(options.body)); return { product: { ...product, ...saved } } }
       return result([])
     })
@@ -108,6 +115,32 @@ describe('product studio', () => {
     expect(saved?.priceCents).toBe(1999)
     expect(saved?.status).toBe('draft')
     expect(fetchMock.mock.calls.some(([url, options]) => url === '/api/admin/products' && options?.method === 'POST')).toBe(true)
+  })
+  it('sets or clears a homepage product independently of saving its details', async () => {
+    window.history.replaceState(null, '', '/studio')
+    let choice: string | null = null
+    const fetchMock = mockApi((url, options) => {
+      if (url === '/api/admin/session') return { staff: { username: 'test-owner', expiresAt: new Date(Date.now() + 60000).toISOString() } }
+      if (url === '/api/admin/homepage-product') {
+        if (options?.method === 'PUT') choice = JSON.parse(String(options.body)).productId
+        return { selection: choice ? { id: choice, name: product.name, available: true } : null }
+      }
+      return result()
+    })
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: new RegExp(product.name) }))
+    const placement = within(screen.getByRole('region', { name: 'Homepage product' }))
+    const feature = placement.getByRole('button', { name: 'Feature on homepage' })
+    await waitFor(() => expect(feature).toBeEnabled())
+    fireEvent.click(feature)
+    expect(await placement.findByText(product.name)).toBeInTheDocument()
+    expect(choice).toBe(product.id)
+    const clear = placement.getByRole('button', { name: 'Use automatic selection' })
+    await waitFor(() => expect(clear).toBeEnabled())
+    fireEvent.click(clear)
+    await placement.findByText('The store automatically shows an in-stock product.')
+    expect(choice).toBeNull()
+    expect(fetchMock.mock.calls.some(([url, options]) => url.startsWith('/api/admin/products') && options?.method === 'PUT')).toBe(false)
   })
   it('rejects fractional cents before posting a product', async () => {
     expect(centsFromInput('19.99')).toBe(1999)

@@ -5,6 +5,7 @@ import { test } from 'node:test'
 import mongoose from 'mongoose'
 import { createApp } from '../src/app.js'
 import { createProductModel, validateProduct } from '../src/catalog/product.js'
+import { createHomepageModel } from '../src/catalog/homepage.js'
 import { sampleProducts } from '../src/catalog/samples.js'
 import { expandedSampleProducts } from '../src/catalog/expanded-samples.js'
 import { createStaffModels, hashStaffPassword } from '../src/staff/accounts.js'
@@ -15,15 +16,16 @@ test('catalog integration with real MongoDB', { skip: !process.env.TEST_MONGO_UR
   const connection = await mongoose.createConnection(process.env.TEST_MONGO_URI, { dbName: `rewild_test_${randomUUID().replaceAll('-', '')}` }).asPromise()
   t.after(async () => { await connection.dropDatabase(); await connection.close() })
   const Product = createProductModel(connection)
+  const HomepageSelection = createHomepageModel(connection)
   const staffModels = createStaffModels(connection)
   const { Staff, StaffSession } = staffModels
   const Order = createOrderModel(connection)
-  await Promise.all([Product, Order, Staff, StaffSession].map(model => model.init()))
+  await Promise.all([Product, HomepageSelection, Order, Staff, StaffSession].map(model => model.init()))
   await Product.create(sampleProducts.map(validateProduct))
   const credentials = { username: 'test-owner', password: 'disposable-integration-test-password' }
   const staff = await Staff.create({ username: credentials.username, passwordHash: await hashStaffPassword(credentials.password) })
   let database = 'connected'
-  const server = createApp({ productModel: Product, databaseStatus: () => database, staffModels, orderModel: Order }).listen(0, '127.0.0.1')
+  const server = createApp({ productModel: Product, homepageModel: HomepageSelection, databaseStatus: () => database, staffModels, orderModel: Order }).listen(0, '127.0.0.1')
   await once(server, 'listening')
   t.after(() => new Promise(resolve => server.close(resolve)))
   const base = `http://127.0.0.1:${server.address().port}/api`
@@ -119,6 +121,41 @@ test('catalog integration with real MongoDB', { skip: !process.env.TEST_MONGO_UR
     assert.equal((await Product.findById(created.id)).status, 'archived')
     const info = await send('/catalog')
     assert.equal(info.data.categories.reduce((sum, item) => sum + item.count, 0), 6)
+  })
+  await t.test('pins one staff-selected homepage product and falls back when it cannot be bought', async () => {
+    const path = '/admin/homepage-product'
+    const catalogPath = '/products?sort=featured&inStock=true&limit=1'
+    const hero = async () => (await send('/homepage-product')).data.product
+    const automatic = (await send(catalogPath)).data.items[0]
+    const choices = (await send('/admin/products?status=active&inStock=true')).data.items.filter(item => item.id !== automatic.id)
+    const [first, second] = choices
+    const firstChoice = { productId: first.id }
+
+    assert.deepEqual(await hero(), automatic)
+    assert.equal((await send(path, 'PUT', firstChoice, { Cookie: '' })).status, 401)
+    assert.equal((await send(path, 'PUT', firstChoice, { Origin: 'https://attacker.example' })).status, 403)
+    assert.equal((await send(path, 'PUT', { productId: { $ne: null } })).status, 422)
+    assert.equal((await send(path, 'PUT', { productId: created.id })).status, 422)
+    assert.equal((await send(path, 'PUT', firstChoice)).status, 200)
+    assert.equal((await hero()).id, first.id)
+    assert.equal((await hero()).sku, undefined)
+    assert.equal((await send(catalogPath)).data.items[0].id, automatic.id)
+
+    assert.equal((await send(path, 'PUT', { productId: second.id })).status, 200)
+    assert.equal((await hero()).id, second.id)
+    await Product.updateOne({ _id: second.id }, { inventory: 0 })
+    assert.deepEqual((await send(path)).data.selection, { id: second.id, name: second.name, available: false })
+    assert.equal((await hero()).id, automatic.id)
+    assert.equal((await send(path, 'PUT', { productId: second.id })).status, 422)
+    await Product.updateOne({ _id: second.id }, { inventory: second.inventory })
+    assert.equal((await hero()).id, second.id)
+    await Product.updateOne({ _id: second.id }, { status: 'archived' })
+    assert.equal((await hero()).id, automatic.id)
+    await Product.updateOne({ _id: second.id }, { status: 'active' })
+
+    assert.equal((await send(path, 'PUT', { productId: null })).status, 200)
+    assert.deepEqual((await send(path)).data, { selection: null })
+    assert.equal((await hero()).id, automatic.id)
   })
   await t.test('recommends live complements and fills unavailable slots without duplicates', async () => {
     const suggested = ['genovese-basil-seeds', 'indoor-potting-blend', 'cream-ledge-watering-can']

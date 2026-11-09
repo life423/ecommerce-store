@@ -1,12 +1,12 @@
 import { money } from '../lib/catalog'
-import type { ProductList } from '../lib/catalog'
+import type { Product } from '../lib/catalog'
 import { useResource } from '../lib/useResource'
 import { AddToCart } from './AddToCart'
 import { CatalogImage } from './CatalogImage'
 
 export function HeroProduct() {
-  const { data, loading } = useResource<ProductList>('/products?sort=featured&inStock=true&limit=1')
-  const product = data?.items[0]
+  const { data, loading } = useResource<{ product: Product | null }>('/homepage-product')
+  const product = data?.product
 
   if (loading) return <div className="hero-feature-placeholder" aria-hidden="true" />
   if (!product) {

@@ -1,6 +1,10 @@
 import { Router } from 'express'
 import { BADGES, CATEGORIES, CatalogError, publicProduct, STATUSES, validateProduct } from './product.js'
 import { findRelatedProducts } from './related.js'
+import { homepagePlacement } from './homepage.js'
+
+const featuredSort = { featured: -1, createdAt: -1, _id: 1 }
+const availableProducts = { status: 'active', inventory: { $gt: 0 } }
 
 const spaceProducts = {
   balcony: ['RW-PLANTER-01', 'RW-TOOLS-01'],
@@ -46,14 +50,14 @@ function parseQuery(query, admin) {
   const maxPrice = integer('maxPrice', undefined, 0, 10_000_000)
   if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) throw new CatalogError(400, 'INVALID_QUERY', 'Minimum price must not exceed maximum price.')
   if (minPrice !== undefined || maxPrice !== undefined) filter.priceCents = { ...(minPrice !== undefined ? { $gte: minPrice } : {}), ...(maxPrice !== undefined ? { $lte: maxPrice } : {}) }
-  const sorts = { featured: { featured: -1, createdAt: -1, _id: 1 }, newest: { createdAt: -1, _id: 1 }, 'price-asc': { priceCents: 1, _id: 1 }, 'price-desc': { priceCents: -1, _id: 1 }, name: { name: 1, _id: 1 } }
+  const sorts = { featured: featuredSort, newest: { createdAt: -1, _id: 1 }, 'price-asc': { priceCents: 1, _id: 1 }, 'price-desc': { priceCents: -1, _id: 1 }, name: { name: 1, _id: 1 } }
   const sortKey = query.sort ?? 'featured'
   if (!Object.hasOwn(sorts, sortKey)) throw new CatalogError(400, 'INVALID_QUERY', 'Unsupported sort order.')
   const sort = sorts[sortKey]
   return { filter, sort, page: integer('page', 1, 1, 10_000), limit: integer('limit', 12, 1, 48) }
 }
 
-export function catalogRoutes({ Product, databaseStatus, editorEnabled }) {
+export function catalogRoutes({ Product, HomepageSelection, databaseStatus, editorEnabled }) {
   const router = Router()
 
   router.get('/catalog', async (_req, res) => {
@@ -67,7 +71,7 @@ export function catalogRoutes({ Product, databaseStatus, editorEnabled }) {
     })
   })
 
-  router.use(['/products', '/admin/products'], (_req, _res, next) => {
+  router.use(['/products', '/admin/products', '/homepage-product', '/admin/homepage-product'], (_req, _res, next) => {
     if (databaseStatus() !== 'connected') return next(new CatalogError(503, 'DATABASE_UNAVAILABLE', 'The catalog is temporarily unavailable. Please try again.'))
     next()
   })
@@ -99,11 +103,41 @@ export function catalogRoutes({ Product, databaseStatus, editorEnabled }) {
     res.set('Cache-Control', 'no-store').json({ items: related.map(item => publicProduct(item)) })
   })
 
+  router.get('/homepage-product', async (_req, res) => {
+    const choice = await HomepageSelection.findById(homepagePlacement).lean()
+    const pinned = choice?.productId
+      ? await Product.findOne({ _id: choice.productId, ...availableProducts }).lean()
+      : null
+    const product = pinned ?? await Product.findOne(availableProducts).sort(featuredSort).lean()
+    res.set('Cache-Control', 'no-store').json({ product: product ? publicProduct(product) : null })
+  })
+
   // The app mounts staff authorization before these routes.
-  router.use('/admin/products', (req, res, next) => {
+  router.use(['/admin/products', '/admin/homepage-product'], (req, res, next) => {
     if (!res.locals.staff) throw new CatalogError(401, 'STAFF_REQUIRED', 'Sign in to access the staff workspace.')
-    if (['POST', 'PUT'].includes(req.method) && !req.is('application/json')) throw new CatalogError(415, 'JSON_REQUIRED', 'Send a JSON product object.')
+    if (['POST', 'PUT'].includes(req.method) && !req.is('application/json')) throw new CatalogError(415, 'JSON_REQUIRED', 'Send a JSON request.')
     next()
+  })
+  router.get('/admin/homepage-product', async (_req, res) => {
+    const choice = await HomepageSelection.findById(homepagePlacement).lean()
+    if (!choice?.productId) return res.json({ selection: null })
+    const product = await Product.findById(choice.productId).select('name status inventory').lean()
+    res.json({ selection: {
+      id: String(choice.productId),
+      name: product?.name ?? 'Removed product',
+      available: product?.status === 'active' && product.inventory > 0,
+    } })
+  })
+  router.put('/admin/homepage-product', async (req, res) => {
+    const productId = req.body?.productId
+    if (productId !== null && (typeof productId !== 'string' || !/^[a-f\d]{24}$/i.test(productId))) {
+      throw new CatalogError(422, 'INVALID_PRODUCT', 'Choose a valid product or use automatic selection.')
+    }
+    if (productId && !await Product.exists({ _id: productId, ...availableProducts })) {
+      throw new CatalogError(422, 'PRODUCT_UNAVAILABLE', 'Choose a published product that is in stock.')
+    }
+    await HomepageSelection.updateOne({ _id: homepagePlacement }, { $set: { productId } }, { upsert: true })
+    res.json({ productId })
   })
   router.get('/admin/products', (req, res) => list(req, res, true))
   router.get('/admin/products/:id', async (req, res) => {
