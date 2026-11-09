@@ -1,6 +1,6 @@
 # Design theory notes for REWILD
 
-Source: the user's supplied `theory-lectures-v2-BEST.pdf`, a 407-page HTML/CSS and web-design theory slide deck. Read the extracted content across the full deck and visually reviewed the component/layout gallery and representative design-rule comparisons. The 222-slide Advanced CSS deck and live Natours/source review are covered in the [UI/UX playbook](./UI-UX-PLAYBOOK.md) and [Natours audit](./NATOURS-AUDIT.md).
+Sources are Jonas Schmedtmann’s `theory-lectures-v2-BEST.pdf` (407 slides) and `all-design-guidelines.pdf` (12 pages), both in Downloads. The review covered the text and rendered pages of both files, with a closer look at the palette, button, and action hierarchy examples. The 222-slide Advanced CSS deck and Natours source review are covered in the [UI/UX playbook](./UI-UX-PLAYBOOK.md) and [Natours audit](./NATOURS-AUDIT.md).
 
 These are durable project notes for future work, not a claim of model training or global memory. They preserve practical lessons in original wording and page references, without bundling the large source PDFs or copying the course's examples into this project.
 
@@ -27,6 +27,12 @@ The site has two user goals: visitors should find and understand appropriate sma
 | UX, 220-233 | Familiar patterns, clear words, useful feedback, and local actions help people reach their goals. Motion should be purposeful and short. | Search/filter/sort use expected controls; URLs retain filter state; drafts are hidden; validation is written and associated with fields; saving and recovery are explicit; keyboard focus moves to an error summary. |
 
 The course's numeric suggestions are starting points rather than compliance guarantees. Its shorthand for large-text contrast is simplified: assess the actual text size and weight against current accessibility standards. Screen size, content, language, and users' settings matter more than mechanically following a screenshot's pixel values.
+
+## Buttons and accent colors
+
+- **Give each action group a clear priority.** Slide 224 places a filled reservation button beside the fields it acts on, where the label is easy to find. Slide 264 pairs filled buttons with outlined or text alternatives, including a product purchase action beside a details link. Start with filled forest green for the main action in the hero, product purchase panel, and cart. Give Quick Look and other secondary actions a quieter outline or surface. Keep simple navigation visibly styled as links. See also guidelines pp. 10–11.
+- **Give the accent a specific job.** Slides 113–121 separate the main, accent, and neutral families, show lighter and darker variants, and use color on icons, highlighted panels, and imagery. The calm examples on slides 246–247 use gentle tints and coordinated photography. Try deep terracotta `#8a432f` on pale clay `#f6e6dc` for a selected space chip or an editorial callout, echoing the planter photos. This candidate pair has a measured text contrast ratio of about 5.9:1. Give selected controls a second cue such as a checkmark and preserve their semantic state. See also guidelines p. 5 and slide 124.
+- **Design the full interaction.** Slide 172 compares resting, hover, and click treatments. Slides 226–229 show faster motion, visible feedback, and action placement close to the affected content. Standardize focus, pressed, disabled, loading, and success states across the first set of controls. Review labels, tap targets, motion preferences, and contrast on the actual rendered surfaces, including focus indicators and photo overlays. See also guidelines pp. 7–8 and 11.
 
 ## Use the right component for the job
 
