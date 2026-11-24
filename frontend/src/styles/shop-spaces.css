@@ -30,7 +30,10 @@
   overflow: hidden;
   background: var(--green);
   color: #fffef5;
+  border-radius: 10px;
 }
+
+.shop-spaces-grid > :first-child .shop-space-card { border-radius: 10px 100px 10px 10px; }
 
 .shop-space-card > img,
 .shop-space-card::after {
@@ -85,7 +88,9 @@
   aspect-ratio: 1;
   border: 1px solid #fffef5a6;
   border-radius: 50%;
-  background: #14231955;
+  background: var(--pollen);
+  color: var(--forest);
+  border-color: var(--pollen);
 }
 
 .shop-space-card:focus-visible {

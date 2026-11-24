@@ -7,13 +7,14 @@
 
 .announcement {
   height:33px;
-  background:var(--green);
-  color:#f2f0e4;
+  background:var(--pollen);
+  color:var(--forest);
   padding:0 48px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  font-size:9px;
+  font-size:10px;
+  font-weight:600;
   letter-spacing:1.25px
 }
 
@@ -133,7 +134,7 @@
 }
 
 .site-footer {
-  background:var(--green);
+  background:var(--forest);
   color:#f6f3e7
 }
 
@@ -145,11 +146,13 @@
 }
 
 .footer-top .wordmark {
-  font-size:31px
+  font-size:clamp(3rem, 7vw, 7rem);
+  letter-spacing:-.065em;
+  color:var(--pollen)
 }
 
 .footer-top p {
-  font-size:10px;
+  font-size:14px;
   color:#bbc6b1;
   line-height:1.8;
   margin:10px 0 0

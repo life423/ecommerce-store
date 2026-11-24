@@ -6,8 +6,9 @@
   display: grid;
   grid-template: "photos copy" / minmax(0, 1.1fr) minmax(0, 1fr);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--cream);
+  border-radius: 10px;
+  background: var(--pollen);
+  overflow: hidden;
 }
 
 .approach-copy {
@@ -56,7 +57,7 @@
   min-height: 100%;
   aspect-ratio: 1.22;
   isolation: isolate;
-  background: #dce4d2;
+  background: #d6dbae;
 }
 
 .approach-photo {
@@ -71,11 +72,13 @@
 .approach-photo-seeds {
   grid-area: 2 / 2 / 10 / 9;
   z-index: 1;
+  transform: rotate(-6deg);
 }
 
 .approach-photo-growth {
   grid-area: 5 / 6 / 12 / 12;
   z-index: 2;
+  transform: rotate(5deg);
 }
 
 .approach-photo img {

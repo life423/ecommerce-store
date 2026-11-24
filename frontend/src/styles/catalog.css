@@ -63,7 +63,7 @@
 }
 
 .category-list button[aria-pressed=true] {
-  background:#edf0e4;
+  background:var(--pollen);
   color:#25422d;
   font-weight:600
 }
@@ -87,7 +87,8 @@
 }
 
 .filter-note {
-  background:#f3f0e6;
+  background:var(--forest);
+  color:var(--cream);
   padding:23px 18px
 }
 
@@ -98,13 +99,15 @@
 }
 
 .filter-note>span {
-  font-size:10px;
-  color:#757b6a;
+  font-size:12px;
+  color:#dee6d6;
   line-height:1.7
 }
 
 .filter-note button {
-  font-size:9px;
+  font-size:12px;
+  min-height:44px;
+  color:var(--pollen);
   padding:0;
   margin-top:22px;
   display:flex;

@@ -39,7 +39,7 @@ html {
 }
 
 .site-header-shell[data-over-hero] .site-header-surface {
-  background: linear-gradient(180deg, #fffefbe8, #fffefbac);
+  background: #f5f2e9f5;
 }
 
 .site-header-shell[data-over-hero]:not([data-compact]) .site-header-surface::before {
@@ -101,7 +101,7 @@ html {
   position: absolute;
   inset: auto 0 0;
   height: 3px;
-  background: #63834f;
+  background: var(--clay);
   transform: scaleX(var(--scroll-progress, 0));
   transform-origin: left;
   pointer-events: none;
@@ -125,5 +125,8 @@ html {
   }
 
   html { scroll-padding-top: calc(var(--header-height) + 74px); }
-  .site-header-shell[data-over-hero] .site-header-surface { background: transparent; }
+  .site-header-shell[data-over-hero] .site-header-surface { background: var(--forest); color: var(--cream); }
+  .site-header-shell[data-over-hero][data-compact] .site-header-surface { color: var(--green); }
+  .site-header-shell[data-over-hero]:not([data-compact]) .icon-button:focus-visible { background: #36533c; }
+  .site-header-shell[data-over-hero]:not([data-compact]) :is(a, button):focus-visible { outline-color: var(--pollen); }
 }

@@ -59,13 +59,14 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
   return <>
     <section className="hero">
       <div className="hero-copy">
-        <span className="eyebrow"><span className="tiny-star" aria-hidden="true">✳</span> Small-space gardening</span>
-        <h1><span className="hero-title-line"><span>Good things</span></span><span className="hero-title-line"><span>start <em>small.</em></span></span></h1>
-        <p>Growing kits, seeds, and tools for windowsills, balconies, and little corners.</p>
+        <span className="eyebrow"><span className="tiny-star" aria-hidden="true">✳</span> Small space. Big growing energy.</span>
+        <h1><span className="hero-title-line"><span>Make room</span></span><span className="hero-title-line"><span>for <em>wild.</em></span></span></h1>
+        <p>Your windowsill is a garden waiting to happen. Meet the seeds, kits, and good tools to get it growing.</p>
         <div className="hero-actions">
           <a className="button button-secondary" href="#collection">Shop all products <Icon name="arrow" /></a>
           <button type="button" className="hero-guide-link" aria-haspopup="dialog" onClick={onOpenGuide}>Growing guide</button>
         </div>
+        <div className="hero-seal" aria-hidden="true"><span>GROW YOUR</span><Icon name="leaf" size={32} /><span>OWN WAY</span></div>
       </div>
       <HeroProduct />
     </section>
@@ -73,7 +74,7 @@ export function CatalogPage({ catalog, onOpenGuide }: { catalog: CatalogInfo | n
     <section id="collection" className="collection page-width" aria-labelledby="collection-title" ref={collection}>
       <Reveal>
         <div className="section-heading collection-heading">
-          <span className="eyebrow">THE GROWING COLLECTION</span>
+          <span className="eyebrow">A FEW GOOD THINGS TO GET GROWING</span>
           <h2 id="collection-title">Shop the collection.</h2>
           <a className="text-link collection-space-link" href="#shop-by-space">Shop by space <Icon name="arrow" size={16} /></a>
         </div>

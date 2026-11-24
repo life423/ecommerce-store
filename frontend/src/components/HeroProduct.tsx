@@ -51,12 +51,13 @@ export function HeroProduct() {
         event.preventDefault()
         event.stopPropagation()
       }}>
+      <span className="hero-product-label" aria-hidden="true"><Icon name="spark" size={16} /> THE REWILD EDIT</span>
       <div className="hero-feature-photo">
         <CatalogImage key={product.id} src={photo?.url ?? '/product-placeholder.svg'} alt={photo?.alt ?? ''} sizes="(max-width: 760px) 30vw, 50vw" fetchPriority={index === 0 ? 'high' : 'auto'} />
       </div>
       <div className="hero-feature-copy">
         <div className="hero-feature-facts">
-          <span className="eyebrow">From the collection</span>
+          <span className="eyebrow">{product.category}</span>
           <a href={`/products/${product.slug}`}>{product.name}</a>
           <span className="hero-feature-price">{money(product.priceCents)}</span>
         </div>
