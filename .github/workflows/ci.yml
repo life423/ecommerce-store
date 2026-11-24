@@ -9,7 +9,9 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # MongoDB 8 cannot start on the Linux 7.0.0 kernel used by the current Ubuntu 24.04 runner.
+    # Revisit before Ubuntu 22.04 retires. https://jira.mongodb.org/browse/SERVER-125742
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     services:
       mongo:
