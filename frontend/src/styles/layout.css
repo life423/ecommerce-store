@@ -142,32 +142,34 @@
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding-block:39px 30px
+  padding-block:20px 16px
 }
 
 .footer-top .wordmark {
-  font-size:clamp(3rem, 7vw, 7rem);
+  font-size:2rem;
+  line-height:1;
   letter-spacing:-.065em;
   color:var(--pollen)
 }
 
 .footer-top p {
-  font-size:14px;
+  font-size:12px;
   color:#bbc6b1;
-  line-height:1.8;
-  margin:10px 0 0
+  line-height:1.5;
+  margin:4px 0 0
 }
 
 .footer-top>a {
   display:flex;
   align-items:center;
   gap:35px;
+  min-height:44px;
   font-size:12px
 }
 
 .footer-bottom {
   border-top:1px solid #ffffff23;
-  padding-block:17px 20px;
+  padding-block:12px;
   display:flex;
   justify-content:space-between;
   gap:20px;

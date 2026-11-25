@@ -40,6 +40,9 @@ function mockApi(options: { inventory?: number; checkout?: (body: Record<string,
 async function addProduct() {
   render(<App />)
   fireEvent.click(await screen.findByRole('button', { name: 'Add to bag' }))
+  expect(screen.getByRole('button', { name: 'Added to bag' })).toBeInTheDocument()
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Open bag, 1 item' }))
   const dialog = await screen.findByRole('dialog', { name: 'Your little garden.' })
   await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Test checkout' })).toBeEnabled())
   return dialog
@@ -93,6 +96,7 @@ describe('bag and checkout flow', () => {
     mockApi({ quoteFails: () => failed })
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Add to bag' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open bag, 1 item' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Bag service unavailable')
     expect(screen.getByRole('button', { name: 'Test checkout' })).toBeDisabled()
     failed = false

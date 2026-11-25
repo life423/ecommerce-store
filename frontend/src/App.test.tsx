@@ -148,7 +148,7 @@ describe('product studio', () => {
     const move = placement.getByRole('button', { name: `Move ${other.name} up` })
     await waitFor(() => expect(move).toBeEnabled())
     fireEvent.click(move)
-    await waitFor(() => expect(move).toBeDisabled())
+    await waitFor(() => expect(placement.getByRole('list', { name: 'Homepage lineup' }).querySelector('li strong')).toHaveTextContent(other.name))
     const remove = placement.getByRole('button', { name: `Remove ${product.name} from homepage` })
     await waitFor(() => expect(remove).toBeEnabled())
     expect(ids).toEqual([other.id, product.id])

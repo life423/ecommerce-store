@@ -18,11 +18,31 @@ function GuideContent({ titleId }: { titleId: string }) {
   const space = spaces.find(space => space.id === selected)!
   const dismiss = useDismissDialog()
   return <div className="growing-guide-layout">
-    <div className="growing-guide-photos"><figure><CatalogImage src="/images/hero.jpg" alt="A sunlit balcony garden with terracotta pots" width="1536" height="1024" sizes="(max-width: 760px) 50vw, 350px" /><figcaption>A little closer to green.</figcaption></figure><figure key={space.image}><CatalogImage src={space.image} alt={space.alt} width="1254" height="1254" sizes="(max-width: 760px) 50vw, 350px" /><figcaption>Your next small beginning.</figcaption></figure></div>
+    <div className="growing-guide-photos"><figure><CatalogImage src="/images/hero.jpg" alt="A sunlit balcony garden with terracotta pots" width="1536" height="1024" sizes="(max-width: 760px) 100vw, 350px" /><figcaption>A little closer to green.</figcaption></figure></div>
     <div className="growing-guide-copy"><span className="eyebrow">THE REWILD GROWING GUIDE</span><h2 id={titleId}>Your little garden<br />starts <em>right here.</em></h2><p className="guide-intro">You don’t need a big garden. Just a place to begin.</p>
       <fieldset className="guide-space-options"><legend>Where would you like to grow?</legend>{spaces.map(item => <button type="button" key={item.id} aria-pressed={item.id === selected} onClick={() => setSelected(item.id)}>{item.label}<Icon name="check" size={14} /></button>)}</fieldset>
-      <div className="guide-space-result" key={space.id} aria-live="polite" aria-atomic="true"><h3>{space.title}</h3><div className="guide-columns"><div><span className="guide-number">01 / YOUR SPACE</span><p>{space.space}</p></div><div><span className="guide-number">02 / YOUR SMALL BEGINNING</span><p>{space.beginning}</p></div></div></div>
+      <div className="guide-space-result" key={space.id} aria-live="polite" aria-atomic="true"><SpaceStory space={space} /></div>
       <a className="button button-dark guide-cta" href={`/?category=${encodeURIComponent(space.category)}#collection`} onClick={() => dismiss(true)}>{space.action}<Icon name="arrow" size={18} /></a><p className="guide-note">Fictional products. Real possibilities. Start small, make it yours.</p>
     </div>
   </div>
+}
+
+function SpaceStory({ space }: { space: typeof spaces[number] }) {
+  const [revealed, setRevealed] = useState(false)
+
+  return <article className="guide-story">
+    <div className="guide-story-content">
+      <button type="button" className="guide-story-photo" aria-label={`Reveal “${space.label}” photo caption`}
+        aria-pressed={revealed} onClick={() => setRevealed(value => !value)}>
+        <CatalogImage src={space.image} alt={space.alt} width={480} height={480} sizes="112px" />
+        <span className="guide-story-caption" aria-hidden="true">{space.label}</span>
+        <span className="guide-story-photo-hint" aria-hidden="true"><Icon name="eye" size={16} /></span>
+      </button>
+      <div className="guide-story-copy">
+        <h3>{space.title}</h3>
+        <p>{space.space}</p>
+        <p>{space.beginning}</p>
+      </div>
+    </div>
+  </article>
 }

@@ -51,35 +51,37 @@
 
 .approach-photos {
   grid-area: photos;
-  display: grid;
-  grid-template: repeat(12, minmax(0, 1fr)) / repeat(12, minmax(0, 1fr));
-  width: 100%;
-  min-height: 100%;
-  aspect-ratio: 1.22;
-  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 1.25rem .75rem .75rem;
   background: #d6dbae;
 }
 
+.approach-composition {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  aspect-ratio: 1.12;
+}
+
 .approach-photo {
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  border: 4px solid #fffefb;
+  position: absolute;
+  width: 59%;
+  aspect-ratio: 1.5;
+  padding: 0;
+  border: 3px solid #fffefb;
+  border-radius: 3px;
   background: #eee9df;
-  box-shadow: 0 12px 24px -12px #243e2d70;
+  color: var(--forest);
+  box-shadow: 0 16px 30px -12px #173c2a70;
+  transition: transform .3s var(--ease-grow), box-shadow .3s ease, outline-color .2s ease;
 }
 
-.approach-photo-seeds {
-  grid-area: 2 / 2 / 10 / 9;
-  z-index: 1;
-  transform: rotate(-6deg);
-}
-
-.approach-photo-growth {
-  grid-area: 5 / 6 / 12 / 12;
-  z-index: 2;
-  transform: rotate(5deg);
-}
+.approach-photo:nth-child(1) { left: 4%; top: 5%; z-index: 1; }
+.approach-photo:nth-child(2) { left: 37%; top: 23%; z-index: 2; }
+.approach-photo:nth-child(3) { left: 19%; top: 49%; z-index: 3; }
 
 .approach-photo img {
   width: 100%;
@@ -87,16 +89,44 @@
   object-fit: cover;
 }
 
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .approach-photo {
-    transition: transform .25s var(--ease-grow), box-shadow .25s ease;
-  }
+.approach-photo-caption {
+  position: absolute;
+  left: .5rem;
+  bottom: .5rem;
+  max-width: calc(100% - 1rem);
+  padding: .35rem .5rem;
+  border-radius: 2px;
+  background: #fffefbf2;
+  font-size: clamp(.625rem, 1vw, .8125rem);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+}
 
-  .approach-photo:hover {
-    z-index: 3;
-    transform: translateY(-.3rem) scale(1.035);
-    box-shadow: 0 16px 28px -10px #243e2d75;
-  }
+.approach-composition[data-active] .approach-photo:not([data-active]) {
+  transform: scale(.94);
+}
+
+.approach-photo[data-active] {
+  z-index: 4;
+  outline: 3px solid var(--forest);
+  outline-offset: 6px;
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: 0 24px 36px -12px #173c2a80;
+}
+
+.approach-photo:focus-visible {
+  z-index: 5;
+  outline: 3px solid var(--forest);
+  outline-offset: 6px;
+}
+
+.approach-photo-hint {
+  margin: .25rem .75rem .5rem;
+  font-size: .75rem;
+  line-height: 1.5;
+  color: var(--forest);
+  text-align: center;
 }
 
 @media (max-width: 760px) {
@@ -104,17 +134,20 @@
     grid-template: "copy" "photos" / minmax(0, 1fr);
   }
 
-  .approach-photos {
-    min-height: 0;
-    max-height: 25rem;
-    aspect-ratio: 1.45;
+  .approach-composition {
+    max-width: 35rem;
+    align-self: center;
+    aspect-ratio: 1.2;
   }
 
-  .approach-photo-seeds {
-    grid-area: 2 / 2 / 10 / 8;
-  }
+  .approach-photos { padding-top: .75rem; }
+}
 
-  .approach-photo-growth {
-    grid-area: 4 / 6 / 12 / 12;
+@media (prefers-reduced-motion: reduce) {
+  .approach-photo,
+  .approach-composition[data-active] .approach-photo:not([data-active]),
+  .approach-photo[data-active] {
+    transform: none;
+    transition: none;
   }
 }

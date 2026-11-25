@@ -7,6 +7,7 @@ import { QuickView } from './QuickView'
 import { ProductCard } from './ProductCard'
 import { GrowingGuide } from './GrowingGuide'
 import { CartProvider } from './CartProvider'
+import { ApproachStory } from './ApproachStory'
 import type { ReactNode } from 'react'
 const render = (ui: ReactNode) => baseRender(<CartProvider>{ui}</CartProvider>)
 
@@ -32,6 +33,21 @@ beforeEach(() => vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true }))))
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); document.body.style.overflow = '' })
 
 describe('storefront interactions', () => {
+  it('brings each story photo forward with pointer, keyboard, or tap and resets with Escape', () => {
+    render(<ApproachStory onOpenGuide={() => {}} />)
+    const seed = screen.getByRole('button', { name: 'Bring “Start with a seed” photo to front' })
+    const balcony = screen.getByRole('button', { name: 'Bring “Find your little corner” photo to front' })
+    const growth = screen.getByRole('button', { name: 'Bring “Watch it grow” photo to front' })
+    fireEvent.click(seed)
+    expect(seed).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.focus(balcony)
+    expect(balcony).toHaveAttribute('aria-pressed', 'true')
+    expect(seed).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(growth)
+    expect(growth).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.keyDown(growth, { key: 'Escape' })
+    expect(growth).toHaveAttribute('aria-pressed', 'false')
+  })
   it('flips product faces with an explicit control and Escape while keeping price and product links available', () => {
     render(<ProductCard product={product} onQuickView={() => {}} />)
     const flip = screen.getByRole('button', { name: `Show details for ${product.name}` })
@@ -51,6 +67,12 @@ describe('storefront interactions', () => {
     expect(screen.getByRole('button', { name: 'A windowsill' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'A balcony' }))
     expect(screen.getByRole('button', { name: 'A balcony' })).toHaveAttribute('aria-pressed', 'true')
+    const caption = screen.getByRole('button', { name: 'Reveal “A balcony” photo caption' })
+    fireEvent.click(caption)
+    expect(caption).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'An indoor corner' }))
+    expect(screen.getByRole('button', { name: 'Reveal “An indoor corner” photo caption' })).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(screen.getByRole('button', { name: 'A balcony' }))
     expect(screen.getByRole('link', { name: 'Explore planters' })).toHaveAttribute('href', '/?category=Planters#collection')
     expect(screen.getByRole('heading', { name: 'Make a little room for green.' })).toBeInTheDocument()
   })
@@ -92,6 +114,17 @@ describe('storefront interactions', () => {
     expect(await screen.findByText('$72')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Out of stock' })).toBeDisabled()
     expect(fetchMock).toHaveBeenCalledWith('/api/products/the-balcony-grow-box', expect.objectContaining({ signal: expect.any(AbortSignal) }))
+  })
+
+  it('keeps quick look open after adding a product and confirms the addition inline', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ product }) }))
+    const dismiss = vi.fn()
+    render(<QuickView product={product} onDismiss={dismiss} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add to bag' }))
+    expect(screen.getByRole('button', { name: 'Added to bag' })).toBeInTheDocument()
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(screen.getByRole('dialog')).toHaveAccessibleName(product.name)
+    expect(dismiss).not.toHaveBeenCalled()
   })
 
   it('allows retry after a quick-look failure and restores scroll and focus on cleanup in StrictMode', async () => {

@@ -40,7 +40,7 @@ function QuickViewContent({ preview, titleId }: { preview: Product; titleId: str
                 {product.inventory === 0 ? 'Out of stock' : product.inventory <= 5 ? `${product.inventory} available` : 'In stock'}
               </div>
               <div className="quick-view-actions">
-                <AddToCart product={product} beforeOpen={() => dismiss(true)} />
+                <AddToCart product={product} />
                 <a className="button button-secondary" href={`/products/${product.slug}`}>
                   View product details <Icon name="arrow" size={16} />
                 </a>

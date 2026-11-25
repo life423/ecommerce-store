@@ -201,15 +201,15 @@
     margin-top:12px
   }
   .footer-top {
-    padding-block:30px
+    padding-block:16px
   }
   .footer-top>a {
-    font-size:10px;
+    font-size:12px;
     gap:10px
   }
   .footer-bottom {
     flex-direction:column;
-    gap:8px;
+    gap:4px;
     font-size:8px
   }
   .product-page {
